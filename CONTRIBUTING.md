@@ -1,4 +1,4 @@
-# Contributing to Variance
+# Contributing to OmniChat
 
 First off, thanks for taking the time to contribute! ❤️
 
@@ -6,7 +6,7 @@ All types of contributions are encouraged and valued. Please make sure to read t
 
 ## Bug reports
 
-Bug reports and feature suggestions must use descriptive and concise titles and be submitted to [GitHub Issues](https://github.com/mat-1/variance/issues). Please use the search function to make sure that you are not submitting duplicates, and that a similar report or request has not already been resolved or rejected.
+Bug reports and feature suggestions must use descriptive and concise titles and be submitted to [GitHub Issues](https://github.com/gntle-en/omnichat/issues). Please use the search function to make sure that you are not submitting duplicates, and that a similar report or request has not already been resolved or rejected.
 
 ## Pull requests
 
@@ -29,8 +29,6 @@ It is not always possible to phrase every change in such a manner, but it is des
 **The smaller the set of changes in the pull request is, the quicker it can be reviewed and merged.** Splitting tasks into multiple smaller pull requests is often preferable.
 
 Also, we use [ESLint](https://eslint.org/) for clean and stylistically consistent code syntax, so make sure your pull request follow it.
-
-**For any query or design discussion, join our [Matrix space](https://matrix.to/#/#variance:matdoes.dev).**
 
 ## Helpful links
 

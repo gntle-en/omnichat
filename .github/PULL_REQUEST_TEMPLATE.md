@@ -1,4 +1,4 @@
-<!-- Please read https://github.com/mat-1/variance/blob/dev/CONTRIBUTING.md before submitting your pull request -->
+<!-- Please read https://github.com/gntle-en/omnichat/blob/main/CONTRIBUTING.md before submitting your pull request -->
 
 ### Description
 

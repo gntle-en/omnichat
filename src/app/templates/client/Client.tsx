@@ -112,7 +112,7 @@ function Client() {
 
         <div className="loading__appname">
           <Text variant="h2" weight="medium">
-            Variance
+            OmniChat
           </Text>
         </div>
       </div>

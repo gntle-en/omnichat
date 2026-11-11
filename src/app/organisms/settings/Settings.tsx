@@ -474,10 +474,10 @@ function AboutSection() {
       <div className="settings-about__card">
         <MenuHeader>Application</MenuHeader>
         <div className="settings-about__branding">
-          <img width="60" height="60" src={CinnySVG} alt="Variance logo" />
+          <img width="60" height="60" src={CinnySVG} alt="OmniChat logo" />
           <div>
             <Text variant="h2" weight="medium">
-              Variance
+              OmniChat
               <span
                 className="text text-b3"
                 style={{ margin: '0 var(--sp-extra-tight)' }}
@@ -486,7 +486,7 @@ function AboutSection() {
             <Text>The good Matrix client</Text>
 
             <div className="settings-about__btns">
-              <Button onClick={() => window.open('https://github.com/mat-1/variance')}>
+              <Button onClick={() => window.open('https://github.com/gntle-en/omnichat')}>
                 Source code
               </Button>
               <Button onClick={() => initMatrix.clearCacheAndReload()} variant="danger">
@@ -516,6 +516,34 @@ function AboutSection() {
                   target="_blank"
                 >
                   Cinny contributors
+                </a>{' '}
+                used under the terms of{' '}
+                <a
+                  href="https://www.gnu.org/licenses/agpl-3.0.en.html"
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  AGPL-3.0
+                </a>
+                .
+              </Text>
+            </li>
+            <li>
+              <Text>
+                <a
+                  href="https://github.com/mat-1/variance"
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  Variance
+                </a>{' '}
+                is ©{' '}
+                <a
+                  href="https://github.com/mat-1/variance/graphs/contributors"
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
+                  Variance contributors
                 </a>{' '}
                 used under the terms of{' '}
                 <a

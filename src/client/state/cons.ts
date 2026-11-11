@@ -6,9 +6,9 @@ const cons = {
     USER_ID: 'cinny_user_id',
     BASE_URL: 'cinny_hs_base_url',
   },
-  ACTIVE_ROOM_ID: 'variance_active_room_id',
+  ACTIVE_ROOM_ID: 'omnichat_active_room_id',
 
-  DEVICE_DISPLAY_NAME: 'Variance',
+  DEVICE_DISPLAY_NAME: 'OmniChat',
   IN_CINNY_SPACES: 'in.cinny.spaces',
   tabs: {
     HOME: 'home',

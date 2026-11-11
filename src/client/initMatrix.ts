@@ -59,7 +59,7 @@ export class InitMatrix extends EventEmitter {
       verificationMethods: ['m.sas.v1'],
     });
 
-    // variance doesn't support voip / turn, so disable it to avoid the unnecessary requests
+    // omnichat doesn't support voip / turn, so disable it to avoid the unnecessary requests
     (this.matrixClient as unknown).canSupportVoip = false;
 
     await indexedDBStore.startup();

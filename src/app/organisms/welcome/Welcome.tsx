@@ -9,9 +9,9 @@ function Welcome() {
   return (
     <div className="app-welcome flex--center">
       <div>
-        <img className="app-welcome__logo noselect" src={CinnySvg} alt="Variance logo" />
+        <img className="app-welcome__logo noselect" src={CinnySvg} alt="OmniChat logo" />
         <Text className="app-welcome__heading" variant="h1" weight="medium" primary>
-          Welcome to Variance
+          Welcome to OmniChat
         </Text>
         <Text className="app-welcome__subheading" variant="s1">
           The good Matrix client

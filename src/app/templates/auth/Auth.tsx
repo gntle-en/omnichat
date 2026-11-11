@@ -717,7 +717,7 @@ function Auth() {
                 <Avatar size="extra-small" imageSrc={CinnySvg} />
                 <TitleWrapper>
                   <Text variant="h2" weight="medium">
-                    Variance
+                    OmniChat
                   </Text>
                 </TitleWrapper>
               </Header>
@@ -730,13 +730,13 @@ function Auth() {
 
         <div className="auth-footer">
           <Text variant="b2">
-            <a href="https://github.com/mat-1/variance" target="_blank" rel="noreferrer">
+            <a href="https://github.com/gntle-en/omnichat" target="_blank" rel="noreferrer">
               About
             </a>
           </Text>
           <Text variant="b2">
             <a
-              href="https://github.com/mat-1/variance/releases"
+              href="https://github.com/gntle-en/omnichat/releases"
               target="_blank"
               rel="noreferrer"
             >{`v${cons.version}`}</a>

@@ -1,7 +1,7 @@
-# Variance
+# OmniChat
 
 A Matrix client that aims to be user-friendly and provide an experience similar to Discord.
-It's a hard-fork of [Cinny](https://github.com/cinnyapp/cinny).
+It combines [Cinny](https://github.com/cinnyapp/cinny) and [Variance](https://github.com/mat-1/variance).
 
 - [Contributing](./CONTRIBUTING.md)
 
@@ -16,9 +16,7 @@ It's a hard-fork of [Cinny](https://github.com/cinnyapp/cinny).
 - Private read receipts
 
 ## Getting started
-A web app is available at https://variance.matdoes.dev and is updated on every commit.
-
-To host Variance on your own, build it with `yarn build` and serve the `dist/` directory. To set default Homeserver on login and register page, place a customized [`config.json`](config.json) in webroot of your choice.
+To host OmniChat on your own, build it with `yarn build` and serve the `dist/` directory. To set default Homeserver on login and register page, place a customized [`config.json`](config.json) in webroot of your choice.
 
 ## Local development
 > We recommend using a version manager as versions change very quickly. You will likely need to switch
@@ -42,12 +40,12 @@ yarn build # Compiles the app into the dist/ directory
 This repository includes a Dockerfile, which builds the application from source and serves it with Nginx on port 80. To
 use this locally, you can build the container like so:
 ```
-docker build -t variance:latest .
+docker build -t omnichat:latest .
 ```
 
 You can then run the container you've built with a command similar to this:
 ```
-docker run -p 8080:80 variance:latest
+docker run -p 8080:80 omnichat:latest
 ```
 
 This will forward your `localhost` port 8080 to the container's port 80. You can visit the app in your browser by navigating to `http://localhost:8080`.
