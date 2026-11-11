@@ -84,6 +84,7 @@ function ProfileAvatarMenu() {
 
   return (
     <SidebarAvatar
+      className="sidebar__profile-avatar"
       onClick={openSettings}
       tooltip="Settings"
       avatar={
