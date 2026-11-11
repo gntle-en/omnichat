@@ -101,16 +101,22 @@ function SessionInfo({ userId }: { userId: string }) {
 
   useEffect(() => {
     let isUnmounted = false;
+    setDevices(null);
+    setIsVisible(false);
 
     async function loadDevices() {
       try {
-        const crypto = mx.getCrypto()!;
+        const crypto = mx.getCrypto();
+        if (!crypto) {
+          if (!isUnmounted) setDevices(new Map());
+          return;
+        }
         const myDevices = await crypto.getUserDeviceInfo([userId], true);
 
         if (isUnmounted) return;
         setDevices(myDevices.get(userId) ?? new Map());
       } catch {
-        setDevices(new Map());
+        if (!isUnmounted) setDevices(new Map());
       }
     }
     loadDevices();
@@ -118,7 +124,7 @@ function SessionInfo({ userId }: { userId: string }) {
     return () => {
       isUnmounted = true;
     };
-  }, [userId]);
+  }, [mx, userId]);
 
   function renderSessionChips() {
     if (!isVisible) return null;
@@ -127,11 +133,9 @@ function SessionInfo({ userId }: { userId: string }) {
         {devices === null && <Text variant="b2">Loading sessions...</Text>}
         {devices?.size === 0 && <Text variant="b2">No sessions found.</Text>}
         {devices !== null &&
-          devices
-            .entries()
-            .map(([deviceId, device]) => (
-              <Chip key={deviceId} iconSrc={ShieldEmptyIC} text={device.displayName || deviceId} />
-            ))}
+          Array.from(devices.entries()).map(([deviceId, device]) => (
+            <Chip key={deviceId} iconSrc={ShieldEmptyIC} text={device.displayName || deviceId} />
+          ))}
       </div>
     );
   }
@@ -143,7 +147,7 @@ function SessionInfo({ userId }: { userId: string }) {
         iconSrc={isVisible ? ChevronBottomIC : ChevronRightIC}
       >
         <Text variant="b2">{`View ${
-          devices?.length > 0 ? `${devices.length} ` : ''
+          devices && devices.size > 0 ? `${devices.size} ` : ''
         }sessions`}</Text>
       </MenuItem>
       {renderSessionChips()}
@@ -196,6 +200,9 @@ function ProfileFooter({ roomId, userId, onRequestClose }) {
     setIsIgnoring(false);
     setIsInviting(false);
   }, [userId]);
+  useEffect(() => {
+    setIsInvited(member?.membership === 'invite');
+  }, [member?.membership]);
 
   const openDM = async () => {
     // Check and open if user already have a DM with userId.
@@ -328,9 +335,11 @@ function useRerenderOnProfileChange(roomId: string | null, userId: string | null
     };
     mx.on(RoomMemberEvent.PowerLevel, handleProfileChange);
     mx.on(RoomMemberEvent.Membership, handleProfileChange);
+    mx.on(RoomMemberEvent.Name, handleProfileChange);
     return () => {
       mx.removeListener(RoomMemberEvent.PowerLevel, handleProfileChange);
       mx.removeListener(RoomMemberEvent.Membership, handleProfileChange);
+      mx.removeListener(RoomMemberEvent.Name, handleProfileChange);
     };
   }, [roomId, userId]);
 }
@@ -341,6 +350,42 @@ function ProfileViewer() {
 
   const mx = initMatrix.matrixClient;
   const room = roomId ? mx.getRoom(roomId) : null;
+  const [, setMembersVersion] = useState(0);
+  const [fetchedProfile, setFetchedProfile] = useState<{
+    userId: string;
+    displayName?: string;
+    avatarUrl?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !roomId || !userId || !mx) return undefined;
+    let isCancelled = false;
+
+    const targetRoom = mx.getRoom(roomId);
+    if (targetRoom && !targetRoom.getMember(userId)) {
+      targetRoom
+        .loadMembersIfNeeded()
+        .then(() => {
+          if (!isCancelled) setMembersVersion((v) => v + 1);
+        })
+        .catch(() => {});
+    }
+
+    mx.getProfileInfo(userId)
+      .then((info) => {
+        if (isCancelled) return;
+        setFetchedProfile({
+          userId,
+          displayName: info.displayname,
+          avatarUrl: info.avatar_url,
+        });
+      })
+      .catch(() => {});
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isOpen, mx, roomId, userId]);
 
   const renderProfile = () => {
     if (!userId) {
@@ -353,8 +398,17 @@ function ProfileViewer() {
     }
 
     const roomMember = room.getMember(userId);
-    const username = roomMember ? getUsernameOfRoomMember(roomMember) : getUsername(userId);
-    const avatarMxc = roomMember?.getMxcAvatarUrl?.() || mx.getUser(userId)?.avatarUrl;
+    const activeFetchedProfile = fetchedProfile?.userId === userId ? fetchedProfile : null;
+    const username =
+      roomMember && roomMember.rawDisplayName !== userId
+        ? getUsernameOfRoomMember(roomMember)
+        : mx.getUser(userId)?.displayName ||
+          activeFetchedProfile?.displayName ||
+          getUsername(userId);
+    const avatarMxc =
+      roomMember?.getMxcAvatarUrl?.() ||
+      mx.getUser(userId)?.avatarUrl ||
+      activeFetchedProfile?.avatarUrl;
     const avatarUrl =
       avatarMxc && avatarMxc !== 'null' ? mx.mxcUrlToHttp(avatarMxc, 80, 80, 'crop') : null;
 

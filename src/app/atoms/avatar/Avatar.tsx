@@ -9,6 +9,12 @@ import RawIcon from '../system-icons/RawIcon';
 
 import ImageBrokenSVG from '../../../../public/res/svg/image-broken.svg';
 import { avatarInitials } from '../../../util/common';
+import {
+  getCachedMediaUrl,
+  isHomeserverMediaUrl,
+  resolveMediaUrl,
+} from '../../../util/matrixMedia';
+import initMatrix from '../../../client/initMatrix';
 import settings from '../../../client/state/settings';
 
 const Avatar = React.forwardRef(
@@ -39,15 +45,42 @@ const Avatar = React.forwardRef(
     // matrix (or at least synapse) lets us replace .gif with .png in the url to make it static
     const pausedImageSrc = imageSrc?.replace(/\.gif\b/, '.png');
     const { onlyAnimateOnHover } = settings;
+    const [isHovered, setIsHovered] = React.useState(false);
 
-    const [activeImageSrc, setActiveImageSrc] = React.useState(
-      onlyAnimateOnHover ? pausedImageSrc : imageSrc,
-    );
+    const targetImageSrc = onlyAnimateOnHover && !isHovered ? pausedImageSrc : imageSrc;
+    const mx = initMatrix.matrixClient;
+    const homeserverUrl = mx?.getHomeserverUrl();
+    const accessToken = mx?.getAccessToken();
+    const needsAuthFetch = isHomeserverMediaUrl(targetImageSrc, homeserverUrl);
+    const cachedAuthSrc =
+      needsAuthFetch && targetImageSrc ? getCachedMediaUrl(targetImageSrc, homeserverUrl) : null;
 
-    // also update when imageSrc changes
+    const [fetchedSrc, setFetchedSrc] = React.useState<{
+      target: string;
+      resolved: string;
+    } | null>(null);
+
     React.useEffect(() => {
-      setActiveImageSrc(onlyAnimateOnHover ? pausedImageSrc : imageSrc);
-    }, [imageSrc, onlyAnimateOnHover, pausedImageSrc]);
+      if (!needsAuthFetch || !targetImageSrc || cachedAuthSrc) return undefined;
+      let isCancelled = false;
+      resolveMediaUrl(targetImageSrc, {
+        homeserverUrl,
+        accessToken,
+      }).then((url) => {
+        if (isCancelled) return;
+        if (url.startsWith('blob:')) {
+          setFetchedSrc({ target: targetImageSrc, resolved: url });
+        }
+      });
+      return () => {
+        isCancelled = true;
+      };
+    }, [accessToken, cachedAuthSrc, homeserverUrl, needsAuthFetch, targetImageSrc]);
+
+    const activeImageSrc = needsAuthFetch
+      ? (cachedAuthSrc ??
+        (fetchedSrc !== null && fetchedSrc.target === targetImageSrc ? fetchedSrc.resolved : null))
+      : targetImageSrc;
 
     return (
       <div ref={ref} className={`avatar-container avatar-container__${size} noselect`}>
@@ -66,12 +99,12 @@ const Avatar = React.forwardRef(
             }}
             onMouseEnter={() => {
               if (onlyAnimateOnHover) {
-                setActiveImageSrc(imageSrc);
+                setIsHovered(true);
               }
             }}
             onMouseLeave={() => {
               if (onlyAnimateOnHover) {
-                setActiveImageSrc(pausedImageSrc);
+                setIsHovered(false);
               }
             }}
             alt=""

@@ -15,6 +15,7 @@ import ExternalSVG from '../../../../public/res/ic/outlined/external.svg';
 import PlaySVG from '../../../../public/res/ic/outlined/play.svg';
 
 import { getBlobSafeMimeType } from '../../../util/mimetypes';
+import { resolveMediaUrl } from '../../../util/matrixMedia';
 import initMatrix from '../../../client/initMatrix';
 import settings from '../../../client/state/settings';
 
@@ -29,72 +30,24 @@ async function getDecryptedBlob(
   return blob;
 }
 
-const cachedUnencryptedMedia = new Map<string, string | Promise<string>>();
-
 export async function getUrl(
   link: string,
   contentType?: string,
   decryptionData?: encrypt.IEncryptedFile,
 ): Promise<string> {
-  try {
-    // make sure the link is the homeserver we expect
-    if (!link.startsWith(initMatrix.matrixClient.getHomeserverUrl())) {
-      console.error(
-        "got media link to unexpected homeserver, aborting so we don't send them our token",
-        link,
-      );
-      return link;
-    }
-
-    if (cachedUnencryptedMedia.has(link)) {
-      const cachedValue = cachedUnencryptedMedia.get(link);
-      if (typeof cachedValue === 'string') return cachedValue;
-      const res = (await cachedValue)!;
-      return res;
-    }
-
-    // insert a promise
-    let resolvePromise: undefined | ((_value: string) => void);
-    const promise = new Promise<string>((resolve: (_value: string) => void) => {
-      resolvePromise = resolve;
-    });
-    cachedUnencryptedMedia.set(link, promise);
-    if (cachedUnencryptedMedia.size > 10000) {
-      console.info('cachedUnencryptedMedia is too large, clearing');
-      // remove everything except the promises
-      cachedUnencryptedMedia.entries().forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          cachedUnencryptedMedia.delete(key);
-        }
-      });
-    }
-
-    const response = await fetch(link, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${initMatrix.matrixClient.getAccessToken()}`,
-      },
-    });
-    if (decryptionData) {
-      if (!contentType) {
-        throw new Error('Cannot decrypt media without a content type');
-      }
-      const objectUrl = URL.createObjectURL(
-        await getDecryptedBlob(response, contentType, decryptionData),
-      );
-      cachedUnencryptedMedia.set(link, objectUrl);
-      resolvePromise?.(objectUrl);
-      return objectUrl;
-    }
-    const blob = await response.blob();
-    const objectUrl: string = URL.createObjectURL(blob);
-    cachedUnencryptedMedia.set(link, objectUrl);
-    resolvePromise?.(objectUrl);
-    return objectUrl;
-  } catch (e) {
-    console.error(e);
+  if (decryptionData && !contentType) {
+    console.error(new Error('Cannot decrypt media without a content type'));
     return link;
   }
+
+  const mx = initMatrix.matrixClient;
+  return resolveMediaUrl(link, {
+    homeserverUrl: mx?.getHomeserverUrl(),
+    accessToken: mx?.getAccessToken(),
+    transformResponse: decryptionData
+      ? (response) => getDecryptedBlob(response, contentType!, decryptionData)
+      : undefined,
+  });
 }
 
 function getNativeHeight(width, height, maxWidth = 296) {

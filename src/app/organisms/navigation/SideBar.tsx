@@ -5,6 +5,7 @@ import './SideBar.scss';
 import { DndProvider, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
+import { UserEvent } from 'matrix-js-sdk';
 import initMatrix from '../../../client/initMatrix';
 import cons from '../../../client/state/cons';
 import { backgroundColorMXID } from '../../../util/colorMXID';
@@ -55,30 +56,46 @@ function useNotificationUpdate() {
 
 function ProfileAvatarMenu() {
   const mx = initMatrix.matrixClient;
-  const [profile, setProfile] = useState({
-    avatarUrl: null,
-    displayName: mx ? mx.getUser(mx.getUserId())?.displayName : undefined,
+  const myUserId = mx?.getUserId();
+  const initialUser = mx && myUserId ? mx.getUser(myUserId) : null;
+  const [profile, setProfile] = useState<{
+    avatarUrl: string | null;
+    displayName?: string;
+  }>({
+    avatarUrl: initialUser?.avatarUrl || null,
+    displayName: initialUser?.displayName,
   });
 
   useEffect(() => {
-    if (!mx) return () => {};
-    const user = mx.getUser(mx.getUserId()!)!;
-    const setNewProfile = (avatarUrl: string, displayName: string) =>
-      setProfile({
+    if (!mx || !myUserId) return () => {};
+    let isMounted = true;
+    const user = mx.getUser(myUserId);
+    const updateProfile = (avatarUrl?: string | null, displayName?: string) => {
+      if (!isMounted) return;
+      setProfile((prev) => ({
         avatarUrl: avatarUrl || null,
-        displayName: displayName || profile.displayName,
-      });
-    const onAvatarChange = (event, myUser) => {
-      setNewProfile(myUser.avatarUrl, myUser.displayName);
+        displayName: displayName || prev.displayName,
+      }));
     };
-    mx.getProfileInfo(mx.getUserId()).then((info) => {
-      setNewProfile(info.avatar_url, info.displayname);
-    });
-    user.on('User.avatarUrl', onAvatarChange);
+    const onUserProfileChange = (
+      _event: unknown,
+      myUser: { avatarUrl?: string; displayName?: string },
+    ) => {
+      updateProfile(myUser.avatarUrl, myUser.displayName);
+    };
+    mx.getProfileInfo(myUserId)
+      .then((info) => {
+        updateProfile(info.avatar_url, info.displayname);
+      })
+      .catch(() => {});
+    user?.on(UserEvent.AvatarUrl, onUserProfileChange);
+    user?.on(UserEvent.DisplayName, onUserProfileChange);
     return () => {
-      user.removeListener('User.avatarUrl', onAvatarChange);
+      isMounted = false;
+      user?.removeListener(UserEvent.AvatarUrl, onUserProfileChange);
+      user?.removeListener(UserEvent.DisplayName, onUserProfileChange);
     };
-  }, []);
+  }, [mx, myUserId]);
 
   if (!mx) return null;
 

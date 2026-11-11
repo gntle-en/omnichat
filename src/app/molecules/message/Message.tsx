@@ -97,34 +97,22 @@ const MessageAvatar = React.memo(
     avatarSrc: string;
     userId: string;
     username: string;
-  }) => {
-    // fetch avatar
-    const decryptedAvatarSrcPromise = avatarSrc
-      ? Media.getUrl(avatarSrc, undefined, undefined)
-      : undefined;
-
-    const [decryptedAvatarSrc, setDecryptedAvatarSrc] = useState<string | undefined>(undefined);
-    useEffect(() => {
-      decryptedAvatarSrcPromise?.then((src) => setDecryptedAvatarSrc(src));
-    }, [decryptedAvatarSrcPromise]);
-
-    return (
-      <div className="message__avatar-container">
-        <button
-          type="button"
-          aria-label="View profile"
-          onClick={() => openProfileViewer(userId, roomId)}
-        >
-          <Avatar
-            imageSrc={decryptedAvatarSrc}
-            text={username}
-            bgColor={backgroundColorMXID(userId)}
-            size="small"
-          />
-        </button>
-      </div>
-    );
-  },
+  }) => (
+    <div className="message__avatar-container">
+      <button
+        type="button"
+        aria-label="View profile"
+        onClick={() => openProfileViewer(userId, roomId)}
+      >
+        <Avatar
+          imageSrc={avatarSrc || null}
+          text={username}
+          bgColor={backgroundColorMXID(userId)}
+          size="small"
+        />
+      </button>
+    </div>
+  ),
 );
 
 const MessageHeader = React.memo(
