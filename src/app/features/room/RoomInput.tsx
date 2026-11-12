@@ -106,6 +106,7 @@ import { getMemberDisplayName, getMentionContent, trimReplyFromBody } from '../.
 import { CommandAutocomplete } from './CommandAutocomplete';
 import { Command, SHRUG, TABLEFLIP, UNFLIP, useCommands } from '../../hooks/useCommands';
 import { mobileOrTablet } from '../../utils/user-agent';
+import { htmlToPlainFallback, textToHtmlRainbow } from '../../../util/rainbow';
 import { useElementSizeObserver } from '../../hooks/useElementSizeObserver';
 import { ReplyLayout, ThreadIndicator } from '../../components/message';
 import { roomToParentsAtom } from '../../state/room/roomToParents';
@@ -309,7 +310,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     };
 
     const dispatchMessage = useCallback(
-      (rawBody: string, rawFormattedBody: string, msgType: MsgType) => {
+      (rawBody: string, rawFormattedBody: string, msgType: MsgType, forceHtml = false) => {
         const body = clearUrls ? clearUrlsFromText(rawBody) : rawBody;
         const formattedBody = clearUrls ? clearUrlsFromHtml(rawFormattedBody) : rawFormattedBody;
         const mentionData = getMentions(mx, roomId, editor);
@@ -326,7 +327,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         const mMentions = getMentionContent(Array.from(mentionData.users), mentionData.room);
         content['m.mentions'] = mMentions;
 
-        if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
+        if (forceHtml || replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
           content.format = 'org.matrix.custom.html';
           content.formatted_body = formattedBody;
         }
@@ -364,6 +365,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         })
       );
       let msgType = MsgType.Text;
+      let forceHtml = false;
 
       if (commandName) {
         plainText = trimCommand(commandName, plainText);
@@ -382,6 +384,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       } else if (commandName === Command.UnFlip) {
         plainText = `${UNFLIP} ${plainText}`;
         customHtml = `${UNFLIP} ${customHtml}`;
+      } else if (commandName === Command.Html) {
+        const rawHtml = trimCommand(
+          Command.Html,
+          toPlainText(editor.children, false).trim()
+        ).trim();
+        if (rawHtml === '') return;
+        plainText = htmlToPlainFallback(rawHtml);
+        customHtml = rawHtml;
+        forceHtml = true;
+      } else if (commandName === Command.Rainbow) {
+        const trimmed = plainText.trim();
+        if (trimmed === '') return;
+        plainText = trimmed;
+        customHtml = textToHtmlRainbow(trimmed);
+        forceHtml = true;
       } else if (commandName) {
         const commandContent = commands[commandName as Command];
         if (commandContent) {
@@ -406,7 +423,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
         return;
       }
 
-      dispatchMessage(plainText, customHtml, msgType);
+      dispatchMessage(plainText, customHtml, msgType, forceHtml);
     }, [commands, dispatchMessage, editor, isMarkdown, sendTypingStatus]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(

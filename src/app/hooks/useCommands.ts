@@ -141,6 +141,8 @@ export enum Command {
   Me = 'me',
   Notice = 'notice',
   Shrug = 'shrug',
+  Html = 'html',
+  Rainbow = 'rainbow',
   StartDm = 'startdm',
   Join = 'join',
   Leave = 'leave',
@@ -197,6 +199,16 @@ export const useCommands = (mx: MatrixClient, room: Room): CommandRecord => {
       [Command.UnFlip]: {
         name: Command.UnFlip,
         description: `Send ${UNFLIP} as message`,
+        exe: async () => undefined,
+      },
+      [Command.Html]: {
+        name: Command.Html,
+        description: 'Send a message as HTML',
+        exe: async () => undefined,
+      },
+      [Command.Rainbow]: {
+        name: Command.Rainbow,
+        description: 'Send a message colored as a rainbow',
         exe: async () => undefined,
       },
       [Command.StartDm]: {
