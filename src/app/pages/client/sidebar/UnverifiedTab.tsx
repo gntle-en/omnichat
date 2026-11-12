@@ -55,6 +55,7 @@ function UnverifiedIndicator() {
                 className={unverified ? css.UnverifiedAvatar : css.UnverifiedOtherAvatar}
                 as="button"
                 ref={triggerRef}
+                radii="Pill"
                 outlined
                 onClick={() => setSettings(true)}
               >

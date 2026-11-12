@@ -14,13 +14,13 @@ export function WelcomePage() {
       >
         <PageHeroSection>
           <PageHero
-            icon={<img width="70" height="70" src={CinnySVG} alt="Cinny Logo" />}
-            title="Welcome to Cinny"
+            icon={<img width="70" height="70" src={CinnySVG} alt="OmniChat Logo" />}
+            title="Welcome to OmniChat"
             subTitle={
               <span>
-                Yet another matrix client.{' '}
+                The good Matrix client.{' '}
                 <a
-                  href="https://github.com/cinnyapp/cinny/releases"
+                  href="https://github.com/gntle-en/omnichat/releases"
                   target="_blank"
                   rel="noreferrer noopener"
                 >
@@ -33,25 +33,13 @@ export function WelcomePage() {
               <Box grow="Yes" style={{ maxWidth: toRem(300) }} direction="Column" gap="300">
                 <Button
                   as="a"
-                  href="https://github.com/cinnyapp/cinny"
+                  href="https://github.com/gntle-en/omnichat"
                   target="_blank"
                   rel="noreferrer noopener"
                   before={<Icon size="200" src={Icons.Code} />}
                 >
                   <Text as="span" size="B400" truncate>
                     Source Code
-                  </Text>
-                </Button>
-                <Button
-                  as="a"
-                  href="https://cinny.in/#sponsor"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  fill="Soft"
-                  before={<Icon size="200" src={Icons.Heart} />}
-                >
-                  <Text as="span" size="B400" truncate>
-                    Support
                   </Text>
                 </Button>
               </Box>

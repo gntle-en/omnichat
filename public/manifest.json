@@ -1,7 +1,7 @@
 {
-  "name": "Cinny",
-  "short_name": "Cinny",
-  "description": "Yet another matrix client",
+  "name": "OmniChat",
+  "short_name": "OmniChat",
+  "description": "The good Matrix client",
   "dir": "auto",
   "lang": "en-US",
   "display": "standalone",
