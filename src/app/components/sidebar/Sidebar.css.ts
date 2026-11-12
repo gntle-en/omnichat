@@ -152,6 +152,9 @@ export const SidebarAvatar = recipe({
         'button&': {
           cursor: 'pointer',
         },
+        ":root[data-ui-style='modern'] &": {
+          borderRadius: config.radii.Round,
+        },
       },
     },
   ],

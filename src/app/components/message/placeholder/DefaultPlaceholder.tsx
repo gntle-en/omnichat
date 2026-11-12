@@ -1,6 +1,7 @@
 import React, { CSSProperties, useMemo } from 'react';
 import { Avatar, Box, ContainerColor, as, color, toRem } from 'folds';
 import { randomNumberBetween } from '../../../utils/common';
+import { ModernRoundAvatar } from '../../../../modern.css';
 import { LinePlaceholder } from './LinePlaceholder';
 import { ModernLayout } from '../layout';
 
@@ -18,6 +19,7 @@ export const DefaultPlaceholder = as<'div', { variant?: ContainerColor }>(
         ref={ref}
         before={
           <Avatar
+            className={ModernRoundAvatar}
             style={{ backgroundColor: color[variant ?? 'SurfaceVariant'].Container }}
             size="300"
           />

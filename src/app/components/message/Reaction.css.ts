@@ -23,6 +23,10 @@ export const Reaction = style([
     borderRadius: config.radii.R300,
 
     selectors: {
+      ":root[data-ui-style='modern'] &": {
+        borderRadius: config.radii.Pill,
+        padding: `${toRem(2)} ${toRem(9)}`,
+      },
       'button&': {
         cursor: 'pointer',
       },

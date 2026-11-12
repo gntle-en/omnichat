@@ -1,4 +1,13 @@
 import { atom } from 'jotai';
+import {
+  DEFAULT_UI_FONT,
+  DEFAULT_UI_STYLE,
+  UiFont,
+  UiStyle,
+  parseUiFont,
+  parseUiStyle,
+} from '../../util/uiStyle';
+import type { CustomThemePayload } from '../utils/customTheme';
 
 const STORAGE_KEY = 'settings';
 export type DateFormat =
@@ -20,6 +29,11 @@ export interface Settings {
   useSystemTheme: boolean;
   lightThemeId?: string;
   darkThemeId?: string;
+  customThemeUrl?: string;
+  customThemeRawJson?: string;
+  customTheme?: CustomThemePayload;
+  uiStyle: UiStyle;
+  uiFont: UiFont;
   monochromeMode?: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
@@ -54,6 +68,11 @@ const defaultSettings: Settings = {
   useSystemTheme: true,
   lightThemeId: undefined,
   darkThemeId: undefined,
+  customThemeUrl: '',
+  customThemeRawJson: '',
+  customTheme: undefined,
+  uiStyle: DEFAULT_UI_STYLE,
+  uiFont: DEFAULT_UI_FONT,
   monochromeMode: false,
   isMarkdown: true,
   editorToolbar: false,
@@ -83,12 +102,15 @@ const defaultSettings: Settings = {
   developerTools: false,
 };
 
-export const getSettings = () => {
+export const getSettings = (): Settings => {
   const settings = localStorage.getItem(STORAGE_KEY);
   if (settings === null) return defaultSettings;
+  const parsed = JSON.parse(settings) as Partial<Settings>;
   return {
     ...defaultSettings,
-    ...(JSON.parse(settings) as Settings),
+    ...parsed,
+    uiStyle: parseUiStyle(parsed.uiStyle),
+    uiFont: parseUiFont(parsed.uiFont),
   };
 };
 

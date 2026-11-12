@@ -164,6 +164,12 @@ export const Mention = recipe({
       padding: `0 ${toRem(2)}`,
       borderRadius: config.radii.R300,
       fontWeight: config.fontWeight.W500,
+      selectors: {
+        ":root[data-ui-style='modern'] &": {
+          borderRadius: config.radii.Pill,
+          padding: `0 ${toRem(6)}`,
+        },
+      },
     },
   ],
   variants: {
