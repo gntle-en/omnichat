@@ -99,6 +99,9 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
 import { getPerMessageProfile, hasSameEffectiveSender } from '../../../util/perMessageProfile';
+import { useBackendExtensions } from '../../hooks/useBackendExtensions';
+import { rememberEventContentForRedaction } from '../../extensions/redactionCache';
+import { InlineDeletedMessage } from '../../extensions/InlineDeletedMessage';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
@@ -372,6 +375,7 @@ const useLiveEventArrive = (room: Room, onArrive: (mEvent: MatrixEvent) => void)
       data
     ) => {
       if (eventRoom?.roomId !== room.roomId || !data.liveEvent) return;
+      rememberEventContentForRedaction(mEvent);
       onArrive(mEvent);
     };
     const handleRedaction: RoomEventHandlerMap[RoomEvent.Redaction] = (mEvent, eventRoom) => {
@@ -447,6 +451,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   const showUrlPreview = room.hasEncryptionStateEvent() ? encUrlPreview : urlPreview;
   const [showHiddenEvents] = useSetting(settingsAtom, 'showHiddenEvents');
   const [showDeveloperTools] = useSetting(settingsAtom, 'developerTools');
+  const backendExtensions = useBackendExtensions();
+  const deletedMode = backendExtensions.deletedMessages.mode;
 
   const [hour24Clock] = useSetting(settingsAtom, 'hour24Clock');
   const [dateFormatString] = useSetting(settingsAtom, 'dateFormatString');
@@ -1018,6 +1024,16 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
   );
   const { t } = useTranslation();
 
+  const renderRedacted = (targetEvent: MatrixEvent) =>
+    deletedMode === 'inline-red' ? (
+      <InlineDeletedMessage
+        mEvent={targetEvent}
+        deletedConfig={backendExtensions.deletedMessages}
+      />
+    ) : (
+      <RedactedContent reason={targetEvent.getUnsigned().redacted_because?.content.reason} />
+    );
+
   const renderMatrixEvent = useMatrixEventRenderer<
     [string, MatrixEvent, number, EventTimelineSet, boolean]
   >(
@@ -1097,7 +1113,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             dateFormatString={dateFormatString}
           >
             {mEvent.isRedacted() ? (
-              <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
+              renderRedacted(mEvent)
             ) : (
               <RenderMessageContent
                 displayName={senderDisplayName}
@@ -1180,7 +1196,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           >
             <EncryptedContent mEvent={mEvent}>
               {() => {
-                if (mEvent.isRedacted()) return <RedactedContent />;
+                if (mEvent.isRedacted()) return renderRedacted(mEvent);
                 if (mEvent.getType() === MessageEvent.Sticker)
                   return (
                     <MSticker
@@ -1285,7 +1301,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             dateFormatString={dateFormatString}
           >
             {mEvent.isRedacted() ? (
-              <RedactedContent reason={mEvent.getUnsigned().redacted_because?.content.reason} />
+              renderRedacted(mEvent)
             ) : (
               <MSticker
                 content={mEvent.getContent()}
@@ -1639,11 +1655,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
     if (!mEvent || !mEventId) return null;
 
+    rememberEventContentForRedaction(mEvent);
+
     const eventSender = mEvent.getSender();
     if (eventSender && ignoredUsersSet.has(eventSender)) {
       return null;
     }
-    if (mEvent.isRedacted() && !showHiddenEvents) {
+    if (mEvent.isRedacted() && !showHiddenEvents && deletedMode === 'hide') {
       return null;
     }
 

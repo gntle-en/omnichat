@@ -14,6 +14,7 @@ A Matrix client that combines the latest [Cinny](https://github.com/cinnyapp/cin
   - Confirmation prompt (**Send anyways**) when sending messages beginning with an unknown `/command`.
   - Support for MSC4144 `com.beeper.per_message_profile` per-message names and avatars.
   - **View Source** inspection directly on room member profiles.
+- **Backend Extensions & AI Agents**: Declarative manifest support (`config.json`, `.well-known/matrix/client`, `/capabilities`, MSC4140 `/versions`) for inline red deleted messages, Send Later scheduling, and custom AI agent triggers. See [Backend Extensions & AI Agents Guide](docs/backend-extensions-and-agents.md).
 
 ## Local Development
 

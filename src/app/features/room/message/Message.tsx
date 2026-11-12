@@ -63,6 +63,7 @@ import { TextViewer } from '../../../components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
 import { ReactionViewer } from '../reaction-viewer';
+import { ExtensionSlot } from '../../../extensions/ExtensionSlot';
 import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '../../../components/user-avatar';
 import { copyToClipboard } from '../../../utils/dom';
@@ -1086,6 +1087,12 @@ export const Message = as<'div', MessageProps>(
                           {canPinEvent && (
                             <MessagePinItem room={room} mEvent={mEvent} onClose={closeMenu} />
                           )}
+                          <ExtensionSlot
+                            slot="message.contextMenu"
+                            room={room}
+                            mEvent={mEvent}
+                            onActionTriggered={closeMenu}
+                          />
                         </Box>
                         {((!mEvent.isRedacted() && canDelete) ||
                           mEvent.getSender() !== mx.getUserId()) && (

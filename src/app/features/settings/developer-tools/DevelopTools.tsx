@@ -1,5 +1,18 @@
 import React, { useCallback, useState } from 'react';
-import { Box, Text, IconButton, Icon, Icons, Scroll, Switch, Button } from 'folds';
+import { useAtom } from 'jotai';
+import {
+  Box,
+  Text,
+  IconButton,
+  Icon,
+  Icons,
+  Scroll,
+  Switch,
+  Button,
+  TextArea,
+  color,
+  toRem,
+} from 'folds';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
 import { SequenceCardStyle } from '../styles.css';
@@ -13,6 +26,14 @@ import {
 } from '../../../components/AccountDataEditor';
 import { copyToClipboard } from '../../../utils/dom';
 import { AccountData } from './AccountData';
+import {
+  backendExtensionsOverrideAtom,
+  useBackendExtensions,
+} from '../../../hooks/useBackendExtensions';
+import {
+  EXAMPLE_DEVELOPER_MANIFEST,
+  parseBackendExtensionsJson,
+} from '../../../../util/backendExtensions';
 
 type DeveloperToolsProps = {
   requestClose: () => void;
@@ -22,6 +43,10 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
   const [developerTools, setDeveloperTools] = useSetting(settingsAtom, 'developerTools');
   const [expand, setExpend] = useState(false);
   const [accountDataType, setAccountDataType] = useState<string | null>();
+  const [overrideJson, setOverrideJson] = useAtom(backendExtensionsOverrideAtom);
+  const [draftJson, setDraftJson] = useState(overrideJson);
+  const [overrideError, setOverrideError] = useState<string | null>(null);
+  const activeExtensions = useBackendExtensions();
 
   const submitAccountData: AccountDataSubmitCallback = useCallback(
     async (type, content) => {
@@ -115,11 +140,106 @@ export function DeveloperTools({ requestClose }: DeveloperToolsProps) {
                 )}
               </Box>
               {developerTools && (
-                <AccountData
-                  expand={expand}
-                  onExpandToggle={setExpend}
-                  onSelect={setAccountDataType}
-                />
+                <>
+                  <Box direction="Column" gap="100">
+                    <Text size="L400">Backend Extensions & AI Agents Override</Text>
+                    <SequenceCard
+                      className={SequenceCardStyle}
+                      variant="SurfaceVariant"
+                      direction="Column"
+                      gap="300"
+                    >
+                      <SettingTile
+                        title="Active Manifest Summary"
+                        description={`Deleted messages: ${
+                          activeExtensions.deletedMessages.mode
+                        } · Send Later: ${
+                          activeExtensions.sendLater.enabled
+                            ? activeExtensions.sendLater.transport
+                            : 'off'
+                        } · Actions: ${activeExtensions.actions.length} · Sources: ${
+                          activeExtensions.sources.length > 0
+                            ? activeExtensions.sources.join(', ')
+                            : 'defaults'
+                        }`}
+                      />
+                      <TextArea
+                        value={draftJson}
+                        onChange={(e) => {
+                          setDraftJson(e.currentTarget.value);
+                          setOverrideError(null);
+                        }}
+                        placeholder='{"schemaVersion": 1, "deletedMessages": {"mode": "inline-red"}, "sendLater": {"enabled": true}}'
+                        rows={8}
+                        resize="Vertical"
+                        variant="Secondary"
+                        radii="300"
+                        outlined
+                        style={{ fontFamily: 'monospace', fontSize: toRem(12) }}
+                      />
+                      {overrideError && (
+                        <Text size="T200" style={{ color: color.Critical.Main }}>
+                          {overrideError}
+                        </Text>
+                      )}
+                      <Box gap="200" wrap="Wrap" justifyContent="End">
+                        <Button
+                          type="button"
+                          size="300"
+                          variant="Secondary"
+                          fill="Soft"
+                          radii="300"
+                          onClick={() => {
+                            const formatted = JSON.stringify(EXAMPLE_DEVELOPER_MANIFEST, null, 2);
+                            setDraftJson(formatted);
+                            setOverrideError(null);
+                          }}
+                        >
+                          <Text size="B300">Load Example</Text>
+                        </Button>
+                        {overrideJson && (
+                          <Button
+                            type="button"
+                            size="300"
+                            variant="Critical"
+                            fill="Soft"
+                            radii="300"
+                            onClick={() => {
+                              setDraftJson('');
+                              setOverrideJson('');
+                              setOverrideError(null);
+                            }}
+                          >
+                            <Text size="B300">Clear Override</Text>
+                          </Button>
+                        )}
+                        <Button
+                          type="button"
+                          size="300"
+                          variant="Primary"
+                          fill="Solid"
+                          radii="300"
+                          onClick={() => {
+                            const parsed = parseBackendExtensionsJson(draftJson);
+                            if (parsed.error) {
+                              setOverrideError(parsed.error);
+                              return;
+                            }
+                            setOverrideError(null);
+                            setOverrideJson(draftJson.trim());
+                          }}
+                        >
+                          <Text size="B300">Apply Override</Text>
+                        </Button>
+                      </Box>
+                    </SequenceCard>
+                  </Box>
+                  <AccountData
+                    expand={expand}
+                    onExpandToggle={setExpend}
+                    onSelect={setAccountDataType}
+                  />
+                </>
               )}
             </Box>
           </PageContent>

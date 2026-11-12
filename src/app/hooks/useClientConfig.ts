@@ -18,6 +18,7 @@ export type ClientConfig = {
   };
 
   hashRouter?: HashRouterConfig;
+  extensions?: unknown;
 };
 
 const ClientConfigContext = createContext<ClientConfig | null>(null);

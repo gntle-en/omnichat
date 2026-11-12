@@ -123,6 +123,10 @@ import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
 import { clearUrlsFromHtml, clearUrlsFromText } from '../../utils/clearUrls';
 import { stopPropagation } from '../../utils/keyboard';
+import { useBackendExtensions } from '../../hooks/useBackendExtensions';
+import { ExtensionSlot } from '../../extensions/ExtensionSlot';
+import { SendLaterButton } from '../../extensions/SendLaterButton';
+import { sendDelayedMessage } from '../../extensions/executeAction';
 
 interface RoomInputProps {
   editor: Editor;
@@ -147,6 +151,7 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     }>();
     const direct = useIsDirectRoom();
     const commands = useCommands(mx, room);
+    const backendExtensions = useBackendExtensions();
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
     const roomToParents = useAtomValue(roomToParentsAtom);
     const powerLevels = usePowerLevelsContext();
@@ -309,8 +314,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       contents.forEach((content) => mx.sendMessage(roomId, content as any));
     };
 
-    const dispatchMessage = useCallback(
-      (rawBody: string, rawFormattedBody: string, msgType: MsgType, forceHtml = false) => {
+    const buildMessageContent = useCallback(
+      (
+        rawBody: string,
+        rawFormattedBody: string,
+        msgType: MsgType,
+        forceHtml = false
+      ): IContent => {
         const body = clearUrls ? clearUrlsFromText(rawBody) : rawBody;
         const formattedBody = clearUrls ? clearUrlsFromHtml(rawFormattedBody) : rawFormattedBody;
         const mentionData = getMentions(mx, roomId, editor);
@@ -343,18 +353,30 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
             content['m.relates_to'].is_falling_back = false;
           }
         }
+        return content;
+      },
+      [clearUrls, editor, mx, replyDraft, roomId]
+    );
+
+    const dispatchMessage = useCallback(
+      (rawBody: string, rawFormattedBody: string, msgType: MsgType, forceHtml = false) => {
+        const content = buildMessageContent(rawBody, rawFormattedBody, msgType, forceHtml);
         mx.sendMessage(roomId, content as any);
         resetEditor(editor);
         resetEditorHistory(editor);
         setReplyDraft(undefined);
         sendTypingStatus(false);
       },
-      [clearUrls, editor, mx, replyDraft, roomId, sendTypingStatus, setReplyDraft]
+      [buildMessageContent, editor, mx, roomId, sendTypingStatus, setReplyDraft]
     );
 
-    const submit = useCallback(() => {
-      uploadBoardHandlers.current?.handleSend();
-
+    const prepareComposerDraft = useCallback((): {
+      plainText: string;
+      customHtml: string;
+      msgType: MsgType;
+      forceHtml: boolean;
+      commandName: string | undefined;
+    } | null => {
       const commandName = getBeginCommand(editor);
       let plainText = toPlainText(editor.children, isMarkdown).trim();
       let customHtml = trimCustomHtml(
@@ -389,17 +411,38 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
           Command.Html,
           toPlainText(editor.children, false).trim()
         ).trim();
-        if (rawHtml === '') return;
+        if (rawHtml === '') return null;
         plainText = htmlToPlainFallback(rawHtml);
         customHtml = rawHtml;
         forceHtml = true;
       } else if (commandName === Command.Rainbow) {
         const trimmed = plainText.trim();
-        if (trimmed === '') return;
+        if (trimmed === '') return null;
         plainText = trimmed;
         customHtml = textToHtmlRainbow(trimmed);
         forceHtml = true;
-      } else if (commandName) {
+      }
+
+      return { plainText, customHtml, msgType, forceHtml, commandName };
+    }, [editor, isMarkdown]);
+
+    const submit = useCallback(() => {
+      uploadBoardHandlers.current?.handleSend();
+
+      const draft = prepareComposerDraft();
+      if (!draft) return;
+
+      const { plainText, customHtml, msgType, forceHtml, commandName } = draft;
+      if (
+        commandName &&
+        commandName !== Command.Me &&
+        commandName !== Command.Notice &&
+        commandName !== Command.Shrug &&
+        commandName !== Command.TableFlip &&
+        commandName !== Command.UnFlip &&
+        commandName !== Command.Html &&
+        commandName !== Command.Rainbow
+      ) {
         const commandContent = commands[commandName as Command];
         if (commandContent) {
           commandContent.exe(plainText);
@@ -424,7 +467,65 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       }
 
       dispatchMessage(plainText, customHtml, msgType, forceHtml);
-    }, [commands, dispatchMessage, editor, isMarkdown, sendTypingStatus]);
+    }, [commands, dispatchMessage, editor, prepareComposerDraft, sendTypingStatus]);
+
+    const handleScheduleSend = useCallback(
+      async (delayMs: number): Promise<string | null> => {
+        const draft = prepareComposerDraft();
+        if (!draft || draft.plainText === '') {
+          return 'Write a message before scheduling.';
+        }
+        const content = buildMessageContent(
+          draft.plainText,
+          draft.customHtml,
+          draft.msgType,
+          draft.forceHtml
+        );
+        const threadRootId =
+          replyDraft?.relation?.rel_type === RelationType.Thread
+            ? replyDraft.relation.event_id
+            : null;
+        const result = await sendDelayedMessage(mx, backendExtensions.sendLater, {
+          roomId,
+          content,
+          delayMs,
+          threadRootId,
+        });
+        if (!result.ok) {
+          return result.error ?? 'Failed to schedule message.';
+        }
+        resetEditor(editor);
+        resetEditorHistory(editor);
+        setReplyDraft(undefined);
+        sendTypingStatus(false);
+        return null;
+      },
+      [
+        backendExtensions.sendLater,
+        buildMessageContent,
+        editor,
+        mx,
+        prepareComposerDraft,
+        replyDraft,
+        roomId,
+        sendTypingStatus,
+        setReplyDraft,
+      ]
+    );
+
+    const getComposerDraftText = useCallback(
+      () => toPlainText(editor.children, isMarkdown).trim(),
+      [editor, isMarkdown]
+    );
+
+    const handleInsertExtensionDraft = useCallback(
+      (text: string) => {
+        resetEditor(editor);
+        Transforms.insertText(editor, text);
+        ReactEditor.focus(editor);
+      },
+      [editor]
+    );
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -774,6 +875,21 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                   </PopOut>
                 )}
               </UseStateProvider>
+              <ExtensionSlot
+                slot="composer.actions"
+                room={room}
+                threadRootId={
+                  replyDraft?.relation?.rel_type === RelationType.Thread
+                    ? replyDraft.relation.event_id
+                    : undefined
+                }
+                getDraftText={getComposerDraftText}
+                onInsertDraft={handleInsertExtensionDraft}
+              />
+              <SendLaterButton
+                sendLaterConfig={backendExtensions.sendLater}
+                onSchedule={handleScheduleSend}
+              />
               <IconButton onClick={submit} variant="SurfaceVariant" size="300" radii="300">
                 <Icon src={Icons.Send} />
               </IconButton>

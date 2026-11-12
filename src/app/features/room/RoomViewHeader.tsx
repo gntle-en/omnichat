@@ -72,6 +72,7 @@ import { RoomSettingsPage } from '../../state/roomSettings';
 import { useCallEmbed, useCallStart } from '../../hooks/useCallEmbed';
 import { useLivekitSupport } from '../../hooks/useLivekitSupport';
 import { webRTCSupported } from '../../utils/rtc';
+import { ExtensionSlot } from '../../extensions/ExtensionSlot';
 
 type RoomMenuProps = {
   room: Room;
@@ -519,7 +520,8 @@ export function RoomViewHeader({ callView }: { callView?: boolean }) {
           </Box>
         </Box>
 
-        <Box shrink="No">
+        <Box shrink="No" alignItems="Center" gap="100">
+          <ExtensionSlot slot="room.headerActions" room={room} />
           {!encryptedRoom && (
             <TooltipProvider
               position="Bottom"
