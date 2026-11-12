@@ -98,6 +98,7 @@ import { markAsRead } from '../../utils/notifications';
 import { useDebounce } from '../../hooks/useDebounce';
 import { getResizeObserverEntry, useResizeObserver } from '../../hooks/useResizeObserver';
 import * as css from './RoomTimeline.css';
+import { getPerMessageProfile, hasSameEffectiveSender } from '../../../util/perMessageProfile';
 import { inSameDay, minuteDifference, timeDayMonthYear, today, yesterday } from '../../utils/time';
 import { createMentionElement, isEmptyEditor, moveCursor } from '../../components/editor';
 import { roomIdToReplyDraftAtomFamily } from '../../state/room/roomInputDrafts';
@@ -1034,7 +1035,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
         const senderId = mEvent.getSender() ?? '';
         const senderDisplayName =
-          getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+          getPerMessageProfile(mEvent.getContent())?.displayname ??
+          getMemberDisplayName(room, senderId) ??
+          getMxIdLocalPart(senderId) ??
+          senderId;
 
         return (
           <Message
@@ -1199,7 +1203,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
 
                   const senderId = mEvent.getSender() ?? '';
                   const senderDisplayName =
-                    getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
+                    getPerMessageProfile(mEvent.getContent())?.displayname ??
+                    getMemberDisplayName(room, senderId) ??
+                    getMxIdLocalPart(senderId) ??
+                    senderId;
                   return (
                     <RenderMessageContent
                       displayName={senderDisplayName}
@@ -1652,7 +1659,12 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       !dayDivider &&
       (!newDivider || eventSender === mx.getUserId()) &&
       prevEvent !== undefined &&
-      prevEvent.getSender() === eventSender &&
+      hasSameEffectiveSender(
+        prevEvent.getSender(),
+        prevEvent.getContent(),
+        eventSender,
+        mEvent.getContent()
+      ) &&
       prevEvent.getType() === mEvent.getType() &&
       minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
 

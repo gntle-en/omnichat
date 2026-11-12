@@ -51,6 +51,8 @@ export interface Settings {
   mediaAutoLoad: boolean;
   urlPreview: boolean;
   encUrlPreview: boolean;
+  clearUrls: boolean;
+  youtubeEmbed: boolean;
   showHiddenEvents: boolean;
   legacyUsernameColor: boolean;
 
@@ -90,6 +92,8 @@ const defaultSettings: Settings = {
   mediaAutoLoad: true,
   urlPreview: true,
   encUrlPreview: false,
+  clearUrls: true,
+  youtubeEmbed: false,
   showHiddenEvents: false,
   legacyUsernameColor: false,
 

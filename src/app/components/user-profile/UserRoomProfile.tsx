@@ -1,6 +1,7 @@
 import { Box, Button, config, Icon, Icons, Text } from 'folds';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { RoomMemberEvent, RoomMemberEventHandlerMap } from 'matrix-js-sdk';
 import { UserHero, UserHeroName } from './UserHero';
 import { getMxIdServer, mxcUrlToHttp } from '../../utils/matrix';
 import { getMemberAvatarMxc, getMemberDisplayName } from '../../utils/room';
@@ -9,6 +10,7 @@ import { useMediaAuthentication } from '../../hooks/useMediaAuthentication';
 import { usePowerLevels } from '../../hooks/usePowerLevels';
 import { useRoom } from '../../hooks/useRoom';
 import { useUserPresence } from '../../hooks/useUserPresence';
+import { useUserProfile } from '../../hooks/useUserProfile';
 import { IgnoredUserAlert, MutualRoomsChip, OptionsChip, ServerChip, ShareChip } from './UserChips';
 import { useCloseUserRoomProfile } from '../../state/hooks/userRoomProfile';
 import { PowerChip } from './PowerChip';
@@ -25,14 +27,16 @@ import { DirectCreateSearchParams } from '../../pages/paths';
 
 type UserRoomProfileProps = {
   userId: string;
+  onViewSource?: (title: string, text: string) => void;
 };
-export function UserRoomProfile({ userId }: UserRoomProfileProps) {
+export function UserRoomProfile({ userId, onViewSource }: UserRoomProfileProps) {
   const mx = useMatrixClient();
   const useAuthentication = useMediaAuthentication();
   const navigate = useNavigate();
   const closeUserRoomProfile = useCloseUserRoomProfile();
   const ignoredUsers = useIgnoredUsers();
   const ignored = ignoredUsers.includes(userId);
+  const [, setMembersVersion] = useState(0);
 
   const room = useRoom();
   const powerLevels = usePowerLevels(room);
@@ -49,12 +53,40 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
   const canUnban = permissions.action('ban', myUserId);
   const canInvite = permissions.action('invite', myUserId);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!room.getMember(userId)) {
+      room
+        .loadMembersIfNeeded()
+        .then(() => {
+          if (!cancelled) setMembersVersion((v) => v + 1);
+        })
+        .catch(() => undefined);
+    }
+
+    const handleMemberUpdate: RoomMemberEventHandlerMap[RoomMemberEvent.Name] = (
+      _event,
+      updatedMember
+    ) => {
+      if (updatedMember.roomId === room.roomId && updatedMember.userId === userId) {
+        setMembersVersion((v) => v + 1);
+      }
+    };
+
+    mx.on(RoomMemberEvent.Name, handleMemberUpdate);
+    return () => {
+      cancelled = true;
+      mx.removeListener(RoomMemberEvent.Name, handleMemberUpdate);
+    };
+  }, [mx, room, userId]);
+
+  const userProfile = useUserProfile(userId);
   const member = room.getMember(userId);
   const membership = useMembership(room, userId);
 
   const server = getMxIdServer(userId);
-  const displayName = getMemberDisplayName(room, userId);
-  const avatarMxc = getMemberAvatarMxc(room, userId);
+  const displayName = getMemberDisplayName(room, userId) ?? userProfile.displayName;
+  const avatarMxc = getMemberAvatarMxc(room, userId) ?? userProfile.avatarUrl;
   const avatarUrl = (avatarMxc && mxcUrlToHttp(mx, avatarMxc, useAuthentication)) ?? undefined;
 
   const presence = useUserPresence(userId);
@@ -66,6 +98,19 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
     };
     navigate(withSearchParam(getDirectCreatePath(), directSearchParam));
   };
+
+  const handleViewSource = onViewSource
+    ? () => {
+        const sourcePayload = member?.events.member?.event ?? {
+          user_id: userId,
+          room_id: room.roomId,
+          membership,
+          displayname: displayName ?? null,
+          avatar_url: avatarMxc ?? null,
+        };
+        onViewSource('Member Source', JSON.stringify(sourcePayload, null, 2));
+      }
+    : undefined;
 
   return (
     <Box direction="Column">
@@ -98,7 +143,13 @@ export function UserRoomProfile({ userId }: UserRoomProfileProps) {
             <ShareChip userId={userId} />
             {creator ? <CreatorChip /> : <PowerChip userId={userId} />}
             {userId !== myUserId && <MutualRoomsChip userId={userId} />}
-            {userId !== myUserId && <OptionsChip userId={userId} />}
+            {(userId !== myUserId || handleViewSource) && (
+              <OptionsChip
+                userId={userId}
+                canBlock={userId !== myUserId}
+                onViewSource={handleViewSource}
+              />
+            )}
           </Box>
         </Box>
         {ignored && <IgnoredUserAlert />}

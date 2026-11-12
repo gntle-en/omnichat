@@ -14,6 +14,7 @@ export function Privacy({ requestClose }: PrivacyProps) {
   const [hideActivity, setHideActivity] = useSetting(settingsAtom, 'hideActivity');
   const [urlPreview, setUrlPreview] = useSetting(settingsAtom, 'urlPreview');
   const [encUrlPreview, setEncUrlPreview] = useSetting(settingsAtom, 'encUrlPreview');
+  const [clearUrls, setClearUrls] = useSetting(settingsAtom, 'clearUrls');
 
   return (
     <Page>
@@ -76,6 +77,17 @@ export function Privacy({ requestClose }: PrivacyProps) {
                     after={
                       <Switch variant="Primary" value={encUrlPreview} onChange={setEncUrlPreview} />
                     }
+                  />
+                </SequenceCard>
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                >
+                  <SettingTile
+                    title="Clear URLs"
+                    description="Automatically remove known tracking parameters from outgoing HTTP(S) links."
+                    after={<Switch variant="Primary" value={clearUrls} onChange={setClearUrls} />}
                   />
                 </SequenceCard>
               </Box>

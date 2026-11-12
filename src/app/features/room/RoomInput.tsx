@@ -14,7 +14,9 @@ import { ReactEditor } from 'slate-react';
 import { Transforms, Editor } from 'slate';
 import {
   Box,
+  Button,
   Dialog,
+  Header,
   Icon,
   IconButton,
   Icons,
@@ -28,6 +30,7 @@ import {
   config,
   toRem,
 } from 'folds';
+import FocusTrap from 'focus-trap-react';
 
 import { useMatrixClient } from '../../hooks/useMatrixClient';
 import {
@@ -117,6 +120,8 @@ import { useTheme } from '../../hooks/useTheme';
 import { useRoomCreatorsTag } from '../../hooks/useRoomCreatorsTag';
 import { usePowerLevelTags } from '../../hooks/usePowerLevelTags';
 import { useComposingCheck } from '../../hooks/useComposingCheck';
+import { clearUrlsFromHtml, clearUrlsFromText } from '../../utils/clearUrls';
+import { stopPropagation } from '../../utils/keyboard';
 
 interface RoomInputProps {
   editor: Editor;
@@ -132,6 +137,13 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
     const [hideActivity] = useSetting(settingsAtom, 'hideActivity');
     const [legacyUsernameColor] = useSetting(settingsAtom, 'legacyUsernameColor');
+    const [clearUrls] = useSetting(settingsAtom, 'clearUrls');
+    const [invalidCommand, setInvalidCommand] = useState<{
+      cmdName: string;
+      body: string;
+      formattedBody: string;
+      msgType: MsgType;
+    }>();
     const direct = useIsDirectRoom();
     const commands = useCommands(mx, room);
     const emojiBtnRef = useRef<HTMLButtonElement>(null);
@@ -296,6 +308,49 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
       contents.forEach((content) => mx.sendMessage(roomId, content as any));
     };
 
+    const dispatchMessage = useCallback(
+      (rawBody: string, rawFormattedBody: string, msgType: MsgType) => {
+        const body = clearUrls ? clearUrlsFromText(rawBody) : rawBody;
+        const formattedBody = clearUrls ? clearUrlsFromHtml(rawFormattedBody) : rawFormattedBody;
+        const mentionData = getMentions(mx, roomId, editor);
+
+        const content: IContent = {
+          msgtype: msgType,
+          body,
+        };
+
+        if (replyDraft && replyDraft.userId !== mx.getUserId()) {
+          mentionData.users.add(replyDraft.userId);
+        }
+
+        const mMentions = getMentionContent(Array.from(mentionData.users), mentionData.room);
+        content['m.mentions'] = mMentions;
+
+        if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
+          content.format = 'org.matrix.custom.html';
+          content.formatted_body = formattedBody;
+        }
+        if (replyDraft) {
+          content['m.relates_to'] = {
+            'm.in_reply_to': {
+              event_id: replyDraft.eventId,
+            },
+          };
+          if (replyDraft.relation?.rel_type === RelationType.Thread) {
+            content['m.relates_to'].event_id = replyDraft.relation.event_id;
+            content['m.relates_to'].rel_type = RelationType.Thread;
+            content['m.relates_to'].is_falling_back = false;
+          }
+        }
+        mx.sendMessage(roomId, content as any);
+        resetEditor(editor);
+        resetEditorHistory(editor);
+        setReplyDraft(undefined);
+        sendTypingStatus(false);
+      },
+      [clearUrls, editor, mx, replyDraft, roomId, sendTypingStatus, setReplyDraft]
+    );
+
     const submit = useCallback(() => {
       uploadBoardHandlers.current?.handleSend();
 
@@ -340,44 +395,19 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
 
       if (plainText === '') return;
 
-      const body = plainText;
-      const formattedBody = customHtml;
-      const mentionData = getMentions(mx, roomId, editor);
-
-      const content: IContent = {
-        msgtype: msgType,
-        body,
-      };
-
-      if (replyDraft && replyDraft.userId !== mx.getUserId()) {
-        mentionData.users.add(replyDraft.userId);
+      const unknownCmdMatch = !commandName ? plainText.match(/^\/([^\s/]+)(?:\s|$)/) : null;
+      if (unknownCmdMatch && !commands[unknownCmdMatch[1] as Command]) {
+        setInvalidCommand({
+          cmdName: unknownCmdMatch[1],
+          body: plainText,
+          formattedBody: customHtml,
+          msgType,
+        });
+        return;
       }
 
-      const mMentions = getMentionContent(Array.from(mentionData.users), mentionData.room);
-      content['m.mentions'] = mMentions;
-
-      if (replyDraft || !customHtmlEqualsPlainText(formattedBody, body)) {
-        content.format = 'org.matrix.custom.html';
-        content.formatted_body = formattedBody;
-      }
-      if (replyDraft) {
-        content['m.relates_to'] = {
-          'm.in_reply_to': {
-            event_id: replyDraft.eventId,
-          },
-        };
-        if (replyDraft.relation?.rel_type === RelationType.Thread) {
-          content['m.relates_to'].event_id = replyDraft.relation.event_id;
-          content['m.relates_to'].rel_type = RelationType.Thread;
-          content['m.relates_to'].is_falling_back = false;
-        }
-      }
-      mx.sendMessage(roomId, content as any);
-      resetEditor(editor);
-      resetEditorHistory(editor);
-      setReplyDraft(undefined);
-      sendTypingStatus(false);
-    }, [mx, roomId, editor, replyDraft, sendTypingStatus, setReplyDraft, isMarkdown, commands]);
+      dispatchMessage(plainText, customHtml, msgType);
+    }, [commands, dispatchMessage, editor, isMarkdown, sendTypingStatus]);
 
     const handleKeyDown: KeyboardEventHandler = useCallback(
       (evt) => {
@@ -502,6 +532,64 @@ export const RoomInput = forwardRef<HTMLDivElement, RoomInputProps>(
                 <Text align="Center">Drag and drop files here or click for selection dialog</Text>
               </Box>
             </Dialog>
+          </OverlayCenter>
+        </Overlay>
+        <Overlay open={!!invalidCommand} backdrop={<OverlayBackdrop />}>
+          <OverlayCenter>
+            <FocusTrap
+              focusTrapOptions={{
+                initialFocus: false,
+                onDeactivate: () => setInvalidCommand(undefined),
+                clickOutsideDeactivates: true,
+                escapeDeactivates: stopPropagation,
+              }}
+            >
+              <Dialog variant="Surface">
+                <Header
+                  style={{
+                    padding: `0 ${config.space.S200} 0 ${config.space.S400}`,
+                    borderBottomWidth: config.borderWidth.B300,
+                  }}
+                  variant="Surface"
+                  size="500"
+                >
+                  <Box grow="Yes">
+                    <Text size="H4">Invalid Command</Text>
+                  </Box>
+                </Header>
+                <Box style={{ padding: config.space.S400 }} direction="Column" gap="400">
+                  <Text priority="400">
+                    {`"${invalidCommand?.cmdName ?? ''}" is not a valid command.`}
+                  </Text>
+                  <Box gap="200" justifyContent="End">
+                    <Button
+                      type="button"
+                      variant="Secondary"
+                      fill="Soft"
+                      onClick={() => setInvalidCommand(undefined)}
+                    >
+                      <Text size="B400">Cancel</Text>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="Primary"
+                      autoFocus
+                      onClick={() => {
+                        if (!invalidCommand) return;
+                        dispatchMessage(
+                          invalidCommand.body,
+                          invalidCommand.formattedBody,
+                          invalidCommand.msgType
+                        );
+                        setInvalidCommand(undefined);
+                      }}
+                    >
+                      <Text size="B400">Send anyways</Text>
+                    </Button>
+                  </Box>
+                </Box>
+              </Dialog>
+            </FocusTrap>
           </OverlayCenter>
         </Overlay>
         {autocompleteQuery?.prefix === AutocompletePrefix.RoomMention && (

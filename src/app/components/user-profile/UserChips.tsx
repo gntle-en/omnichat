@@ -442,7 +442,15 @@ export function IgnoredUserAlert() {
   );
 }
 
-export function OptionsChip({ userId }: { userId: string }) {
+export function OptionsChip({
+  userId,
+  canBlock = true,
+  onViewSource,
+}: {
+  userId: string;
+  canBlock?: boolean;
+  onViewSource?: () => void;
+}) {
   const mx = useMatrixClient();
   const [cords, setCords] = useState<RectCords>();
 
@@ -483,26 +491,43 @@ export function OptionsChip({ userId }: { userId: string }) {
         >
           <Menu>
             <div style={{ padding: config.space.S100 }}>
-              <MenuItem
-                variant="Critical"
-                fill="None"
-                size="300"
-                radii="300"
-                onClick={() => {
-                  toggleIgnore();
-                  close();
-                }}
-                before={
-                  ignoring ? (
-                    <Spinner variant="Critical" size="50" />
-                  ) : (
-                    <Icon size="50" src={Icons.Prohibited} />
-                  )
-                }
-                disabled={ignoring}
-              >
-                <Text size="B300">{ignored ? 'Unblock User' : 'Block User'}</Text>
-              </MenuItem>
+              {onViewSource && (
+                <MenuItem
+                  variant="Surface"
+                  fill="None"
+                  size="300"
+                  radii="300"
+                  onClick={() => {
+                    close();
+                    onViewSource();
+                  }}
+                  before={<Icon size="50" src={Icons.BlockCode} />}
+                >
+                  <Text size="B300">View Source</Text>
+                </MenuItem>
+              )}
+              {canBlock && (
+                <MenuItem
+                  variant="Critical"
+                  fill="None"
+                  size="300"
+                  radii="300"
+                  onClick={() => {
+                    toggleIgnore();
+                    close();
+                  }}
+                  before={
+                    ignoring ? (
+                      <Spinner variant="Critical" size="50" />
+                    ) : (
+                      <Icon size="50" src={Icons.Prohibited} />
+                    )
+                  }
+                  disabled={ignoring}
+                >
+                  <Text size="B300">{ignored ? 'Unblock User' : 'Block User'}</Text>
+                </MenuItem>
+              )}
             </div>
           </Menu>
         </FocusTrap>

@@ -24,13 +24,16 @@ import {
   UnsupportedContent,
   VideoContent,
 } from './message';
-import { UrlPreviewCard, UrlPreviewHolder } from './url-preview';
+import { UrlPreviewCard, UrlPreviewHolder, YouTubeEmbedCard } from './url-preview';
 import { Image, MediaControl, Video } from './media';
 import { ImageViewer } from './image-viewer';
 import { PdfViewer } from './Pdf-viewer';
 import { TextViewer } from './text-viewer';
 import { testMatrixTo } from '../plugins/matrix-to';
 import { IImageContent } from '../../types/matrix/common';
+import { useSetting } from '../state/hooks/settings';
+import { settingsAtom } from '../state/settings';
+import { parseYouTubeUrl } from '../utils/youtube';
 
 type RenderMessageContentProps = {
   displayName: string;
@@ -58,14 +61,20 @@ export function RenderMessageContent({
   linkifyOpts,
   outlineAttachment,
 }: RenderMessageContentProps) {
+  const [youtubeEmbed] = useSetting(settingsAtom, 'youtubeEmbed');
+
   const renderUrlsPreview = (urls: string[]) => {
     const filteredUrls = urls.filter((url) => !testMatrixTo(url));
     if (filteredUrls.length === 0) return undefined;
     return (
       <UrlPreviewHolder>
-        {filteredUrls.map((url) => (
-          <UrlPreviewCard key={url} url={url} ts={ts} />
-        ))}
+        {filteredUrls.map((url) => {
+          const yt = youtubeEmbed ? parseYouTubeUrl(url) : undefined;
+          if (yt) {
+            return <YouTubeEmbedCard key={url} url={url} ts={ts} parsed={yt} />;
+          }
+          return <UrlPreviewCard key={url} url={url} ts={ts} />;
+        })}
       </UrlPreviewHolder>
     );
   };

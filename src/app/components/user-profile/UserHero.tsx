@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Avatar,
   Box,
@@ -29,6 +29,13 @@ type UserHeroProps = {
 };
 export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
   const [viewAvatar, setViewAvatar] = useState<string>();
+  const [coverError, setCoverError] = useState(false);
+
+  useEffect(() => {
+    setCoverError(false);
+  }, [avatarUrl]);
+
+  const showCoverImage = Boolean(avatarUrl && !coverError);
 
   return (
     <Box direction="Column" className={css.UserHero}>
@@ -36,11 +43,17 @@ export function UserHero({ userId, avatarUrl, presence }: UserHeroProps) {
         className={css.UserHeroCoverContainer}
         style={{
           backgroundColor: colorMXID(userId),
-          filter: avatarUrl ? undefined : 'brightness(50%)',
+          filter: showCoverImage ? undefined : 'brightness(50%)',
         }}
       >
-        {avatarUrl && (
-          <img className={css.UserHeroCover} src={avatarUrl} alt={userId} draggable="false" />
+        {showCoverImage && (
+          <img
+            className={css.UserHeroCover}
+            src={avatarUrl}
+            alt={userId}
+            draggable="false"
+            onError={() => setCoverError(true)}
+          />
         )}
       </div>
       <div className={css.UserHeroAvatarContainer}>

@@ -18,7 +18,13 @@ export const useUserProfile = (userId: string): UserProfile => {
   });
 
   useEffect(() => {
+    let cancelled = false;
     const user = mx.getUser(userId);
+    setProfile({
+      avatarUrl: user?.avatarUrl,
+      displayName: user?.displayName,
+    });
+
     const onAvatarChange: UserEventHandlerMap[UserEvent.AvatarUrl] = (event, myUser) => {
       setProfile((cp) => ({
         ...cp,
@@ -32,16 +38,20 @@ export const useUserProfile = (userId: string): UserProfile => {
       }));
     };
 
-    mx.getProfileInfo(userId).then((info) =>
-      setProfile({
-        avatarUrl: info.avatar_url,
-        displayName: info.displayname,
+    mx.getProfileInfo(userId)
+      .then((info) => {
+        if (cancelled) return;
+        setProfile({
+          avatarUrl: info.avatar_url,
+          displayName: info.displayname,
+        });
       })
-    );
+      .catch(() => undefined);
 
     user?.on(UserEvent.AvatarUrl, onAvatarChange);
     user?.on(UserEvent.DisplayName, onDisplayNameChange);
     return () => {
+      cancelled = true;
       user?.removeListener(UserEvent.AvatarUrl, onAvatarChange);
       user?.removeListener(UserEvent.DisplayName, onDisplayNameChange);
     };

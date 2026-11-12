@@ -447,6 +447,7 @@ export function Appearance({ requestClose }: AppearanceProps) {
   const [uiFont, setUiFont] = useSetting(settingsAtom, 'uiFont');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
+  const [youtubeEmbed, setYoutubeEmbed] = useSetting(settingsAtom, 'youtubeEmbed');
 
   return (
     <Page>
@@ -537,6 +538,20 @@ export function Appearance({ requestClose }: AppearanceProps) {
                     title="Twitter Emoji"
                     after={
                       <Switch variant="Primary" value={twitterEmoji} onChange={setTwitterEmoji} />
+                    }
+                  />
+                </SequenceCard>
+
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                >
+                  <SettingTile
+                    title="YouTube Embed Player"
+                    description="Play YouTube links inline instead of showing a static preview card when URL previews are enabled."
+                    after={
+                      <Switch variant="Primary" value={youtubeEmbed} onChange={setYoutubeEmbed} />
                     }
                   />
                 </SequenceCard>

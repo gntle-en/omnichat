@@ -54,6 +54,7 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { getEditedEvent, getMentionContent, trimReplyFromFormattedBody } from '../../../utils/room';
 import { mobileOrTablet } from '../../../utils/user-agent';
 import { useComposingCheck } from '../../../hooks/useComposingCheck';
+import { clearUrlsFromHtml, clearUrlsFromText } from '../../../utils/clearUrls';
 
 type MessageEditorProps = {
   roomId: string;
@@ -69,6 +70,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
     const [enterForNewline] = useSetting(settingsAtom, 'enterForNewline');
     const [globalToolbar] = useSetting(settingsAtom, 'editorToolbar');
     const [isMarkdown] = useSetting(settingsAtom, 'isMarkdown');
+    const [clearUrls] = useSetting(settingsAtom, 'clearUrls');
     const [toolbar, setToolbar] = useState(globalToolbar);
     const isComposing = useComposingCheck();
 
@@ -99,14 +101,16 @@ export const MessageEditor = as<'div', MessageEditorProps>(
 
     const [saveState, save] = useAsyncCallback(
       useCallback(async () => {
-        const plainText = toPlainText(editor.children, isMarkdown).trim();
-        const customHtml = trimCustomHtml(
+        const rawPlainText = toPlainText(editor.children, isMarkdown).trim();
+        const rawCustomHtml = trimCustomHtml(
           toMatrixCustomHTML(editor.children, {
             allowTextFormatting: true,
             allowBlockMarkdown: isMarkdown,
             allowInlineMarkdown: isMarkdown,
           })
         );
+        const plainText = clearUrls ? clearUrlsFromText(rawPlainText) : rawPlainText;
+        const customHtml = clearUrls ? clearUrlsFromHtml(rawCustomHtml) : rawCustomHtml;
 
         const [prevBody, prevCustomHtml, prevMentions] = getPrevBodyAndFormattedBody();
 
@@ -154,7 +158,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
         };
 
         return mx.sendMessage(roomId, content);
-      }, [mx, editor, roomId, mEvent, isMarkdown, getPrevBodyAndFormattedBody])
+      }, [clearUrls, mx, editor, roomId, mEvent, isMarkdown, getPrevBodyAndFormattedBody])
     );
 
     const handleSave = useCallback(() => {

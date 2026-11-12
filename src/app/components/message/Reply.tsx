@@ -12,6 +12,7 @@ import { scaleSystemEmoji } from '../../plugins/react-custom-html-parser';
 import { useRoomEvent } from '../../hooks/useRoomEvent';
 import colorMXID from '../../../util/colorMXID';
 import { GetMemberPowerTag } from '../../hooks/useMemberPowerTag';
+import { getPerMessageProfile } from '../../../util/perMessageProfile';
 
 type ReplyLayoutProps = {
   userColor?: string;
@@ -111,7 +112,11 @@ export const Reply = as<'div', ReplyProps>(
           username={
             sender && (
               <Text size="T300" truncate>
-                <b>{getMemberDisplayName(room, sender) ?? getMxIdLocalPart(sender)}</b>
+                <b>
+                  {getPerMessageProfile(replyEvent?.getContent())?.displayname ??
+                    getMemberDisplayName(room, sender) ??
+                    getMxIdLocalPart(sender)}
+                </b>
               </Text>
             )
           }

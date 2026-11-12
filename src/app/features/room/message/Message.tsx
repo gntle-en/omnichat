@@ -63,6 +63,7 @@ import { useMatrixClient } from '../../../hooks/useMatrixClient';
 import { useRecentEmoji } from '../../../hooks/useRecentEmoji';
 import * as css from './styles.css';
 import { EventReaders } from '../../../components/event-readers';
+import { getPerMessageProfile } from '../../../../util/perMessageProfile';
 import { TextViewer } from '../../../components/text-viewer';
 import { AsyncStatus, useAsyncCallback } from '../../../hooks/useAsyncCallback';
 import { EmojiBoard } from '../../../components/emoji-board';
@@ -728,9 +729,13 @@ export const Message = as<'div', MessageProps>(
     const [menuAnchor, setMenuAnchor] = useState<RectCords>();
     const [emojiBoardAnchor, setEmojiBoardAnchor] = useState<RectCords>();
 
+    const perMessageProfile = getPerMessageProfile(mEvent.getContent());
     const senderDisplayName =
-      getMemberDisplayName(room, senderId) ?? getMxIdLocalPart(senderId) ?? senderId;
-    const senderAvatarMxc = getMemberAvatarMxc(room, senderId);
+      perMessageProfile?.displayname ??
+      getMemberDisplayName(room, senderId) ??
+      getMxIdLocalPart(senderId) ??
+      senderId;
+    const senderAvatarMxc = perMessageProfile?.avatarUrl ?? getMemberAvatarMxc(room, senderId);
 
     const tagColor = memberPowerTag?.color
       ? accessibleTagColors?.get(memberPowerTag.color)
