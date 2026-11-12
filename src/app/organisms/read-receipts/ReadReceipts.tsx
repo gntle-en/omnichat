@@ -36,10 +36,10 @@ function ReadReceipts() {
   };
 
   function renderPeople(userId) {
-    const room = initMatrix.matrixClient.getRoom(roomId);
-    const member = room.getMember(userId);
+    const room = roomId ? initMatrix.matrixClient.getRoom(roomId) : null;
+    const member = room?.getMember(userId);
     const getUserDisplayName = () => {
-      if (room?.getMember(userId)) return getUsernameOfRoomMember(room.getMember(userId));
+      if (member) return getUsernameOfRoomMember(member);
       return getUsername(userId);
     };
     return (

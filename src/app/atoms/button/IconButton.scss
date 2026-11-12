@@ -1,9 +1,10 @@
 @use 'state';
 
 .ic-btn {
+  --ic-btn-radius: var(--bo-radius-pill);
   padding: var(--sp-extra-tight);
   border: none;
-  border-radius: var(--bo-radius);
+  border-radius: var(--ic-btn-radius);
   background-color: transparent;
   font-size: 0;
   line-height: 0;

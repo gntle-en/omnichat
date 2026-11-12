@@ -4,6 +4,7 @@ import appDispatcher from '../dispatcher';
 import cons from './cons';
 import { ThemeSettings } from './themes/themeSettings';
 import { loadThemeFromUrl } from './themes/loadTheme';
+import { UiStyle, applyUiStyleToElement, parseUiStyle } from '../../util/uiStyle';
 
 function getSettings(): Record<string, unknown> | null {
   const settings = localStorage.getItem('settings');
@@ -49,6 +50,8 @@ class Settings extends EventEmitter {
 
   clearUrls: boolean;
 
+  uiStyle: UiStyle;
+
   constructor() {
     super();
 
@@ -69,6 +72,8 @@ class Settings extends EventEmitter {
     this.showUrlPreview = this.getShowUrlPreview();
     this.sendReadReceipts = this.getSendReadReceipts();
     this.clearUrls = this.getClearUrls();
+    this.uiStyle = this.getUiStyle();
+    this.applyUiStyle();
   }
 
   getThemeSettings(): ThemeSettings {
@@ -259,7 +264,18 @@ class Settings extends EventEmitter {
     return settings.clearUrls;
   }
 
-  setter(action: { type: string }) {
+  getUiStyle(): UiStyle {
+    if (this.uiStyle === 'modern' || this.uiStyle === 'classic') return this.uiStyle;
+
+    const settings = getSettings();
+    return parseUiStyle(settings?.uiStyle);
+  }
+
+  applyUiStyle(): void {
+    applyUiStyleToElement(document.documentElement, this.getUiStyle());
+  }
+
+  setter(action: { type: string; uiStyle?: UiStyle }) {
     const actions = {
       [cons.actions.settings.TOGGLE_SYSTEM_THEME]: () => {
         this.toggleUseSystemTheme();
@@ -326,6 +342,12 @@ class Settings extends EventEmitter {
         this.clearUrls = !this.clearUrls;
         setSettings('clearUrls', this.clearUrls);
         this.emit(cons.events.settings.CLEAR_URLS_TOGGLED, this.clearUrls);
+      },
+      [cons.actions.settings.SET_UI_STYLE]: () => {
+        this.uiStyle = parseUiStyle(action.uiStyle);
+        this.applyUiStyle();
+        setSettings('uiStyle', this.uiStyle);
+        this.emit(cons.events.settings.UI_STYLE_CHANGED, this.uiStyle);
       },
     };
 

@@ -19,7 +19,9 @@ import {
   toggleShowUrlPreview,
   toggleReadReceipts,
   toggleClearUrls,
+  setUiStyle,
 } from '../../../client/action/settings';
+import { parseUiStyle } from '../../../util/uiStyle';
 import { usePermission } from '../../hooks/usePermission';
 
 import Text from '../../atoms/text/Text';
@@ -92,6 +94,28 @@ function AppearanceSection() {
     <div className="settings-appearance">
       <div className="settings-appearance__card">
         <MenuHeader>Theme</MenuHeader>
+        <SettingTile
+          title="UI Style"
+          options={
+            <SegmentedControls
+              selectedId={settings.getUiStyle()}
+              segments={[
+                { id: 'modern', text: 'Modern' },
+                { id: 'classic', text: 'Classic' },
+              ]}
+              onSelect={(styleId: string) => {
+                setUiStyle(parseUiStyle(styleId));
+                updateState({});
+              }}
+            />
+          }
+          content={
+            <Text variant="b3">
+              Switch between refined Modern shapes and the original Classic layout. Pairs with any
+              color theme below.
+            </Text>
+          }
+        />
         <SettingTile
           title="Follow system theme"
           options={

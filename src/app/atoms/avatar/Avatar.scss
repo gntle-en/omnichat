@@ -4,7 +4,7 @@
   display: inline-flex;
   width: 42px;
   height: 42px;
-  border-radius: var(--bo-radius);
+  border-radius: var(--bo-radius-avatar);
   position: relative;
 
   &__large {
@@ -29,7 +29,7 @@
   &__ultra-small {
     width: var(--av-ultra-small);
     height: var(--av-ultra-small);
-    border-radius: calc(var(--bo-radius) / 2);
+    border-radius: var(--bo-radius-avatar-xs);
   }
 
   > img {

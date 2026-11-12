@@ -1,3 +1,4 @@
+import { getColorSchemeForTheme } from '../../../util/uiStyle';
 import {
   AYU_THEME,
   BUTTER_THEME,
@@ -260,5 +261,6 @@ export class ThemeSettings {
     Object.entries(properties).forEach(([key, value]) => {
       document.documentElement.style.setProperty(`--${key}`, value);
     });
+    document.documentElement.style.colorScheme = getColorSchemeForTheme(this.getActualThemeId());
   }
 }

@@ -65,7 +65,7 @@
     width: var(--av-small);
     height: var(--av-small);
     background-color: var(--bg-surface-hover);
-    border-radius: var(--bo-radius);
+    border-radius: var(--bo-radius-avatar);
   }
 
   &__header,
@@ -338,7 +338,7 @@
   transform: translateY(-100%);
 
   border-radius: var(--bo-radius);
-  box-shadow: var(--bs-surface-border);
+  box-shadow: var(--ui-shadow-popup, var(--bs-surface-border));
   background-color: var(--bg-surface-low);
   display: none;
 

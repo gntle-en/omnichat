@@ -135,6 +135,11 @@
 
   /* border */
   --bo-radius: 8px;
+  --bo-radius-sm: calc(var(--bo-radius) / 2);
+  --bo-radius-lg: var(--bo-radius);
+  --bo-radius-pill: var(--bo-radius);
+  --bo-radius-avatar: var(--bo-radius);
+  --bo-radius-avatar-xs: calc(var(--bo-radius) / 2);
 
   /* font styles: font-size, letter-spacing, line-height */
   --fs-h1: 35.6px;
@@ -289,7 +294,7 @@ input[type='checkbox'] {
   padding: 0;
   width: 20px;
   height: 20px;
-  border-radius: calc(var(--bo-radius) / 2);
+  border-radius: var(--bo-radius-sm);
   box-shadow: var(--bs-primary-border);
   background-color: var(--bg-surface);
   cursor: pointer;

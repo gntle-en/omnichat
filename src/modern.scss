@@ -1,0 +1,130 @@
+:root[data-ui-style='modern'] {
+  /* Modern surface radii & elevation tokens */
+  --bo-radius: 12px;
+  --bo-radius-sm: 6px;
+  --bo-radius-lg: 16px;
+  --bo-radius-pill: 9999px;
+  --bo-radius-avatar: 50%;
+  --bo-radius-avatar-xs: 50%;
+
+  --ui-shadow-card:
+    var(--bs-surface-border), 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 14px rgba(0, 0, 0, 0.06);
+  --ui-shadow-popup:
+    var(--bs-popup), 0 4px 12px rgba(0, 0, 0, 0.14), 0 16px 36px rgba(0, 0, 0, 0.18);
+  --ui-transition-colors:
+    background-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 150ms cubic-bezier(0.22, 1, 0.36, 1), color 150ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Crisp pill controls */
+  .toggle {
+    border-radius: var(--bo-radius-pill);
+    transition: var(--ui-transition-colors);
+
+    &__thumb {
+      border-radius: var(--bo-radius-pill);
+      transition:
+        transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+        background-color 150ms ease;
+    }
+  }
+
+  .segmented-controls {
+    border-radius: var(--bo-radius-pill);
+  }
+
+  .segment-btn {
+    transition: var(--ui-transition-colors);
+  }
+
+  /* Pill reactions and Matrix user/room mentions */
+  .msg__reaction {
+    border-radius: var(--bo-radius-pill);
+    padding: 2px 9px;
+    transition: var(--ui-transition-colors);
+  }
+
+  .message__body span[data-mx-pill] {
+    border-radius: var(--bo-radius-pill);
+    padding: 1px 7px;
+  }
+
+  .message__options {
+    padding: 2px;
+  }
+
+  /* Soft inset rows inside context menus and drawer tabs */
+  .context-menu {
+    padding: 6px;
+  }
+
+  .context-menu__item > button {
+    border-radius: calc(var(--bo-radius) - 4px);
+    transition: var(--ui-transition-colors);
+  }
+
+  .pw-content-selector .context-menu__item > button {
+    border-radius: var(--bo-radius);
+  }
+
+  .tab-item {
+    border-radius: var(--bo-radius);
+    transition: var(--ui-transition-colors);
+  }
+
+  /* Modal backdrop polish and smooth interactive controls */
+  .raw-modal__overlay {
+    backdrop-filter: blur(6px);
+  }
+
+  .btn-surface,
+  .btn-primary,
+  .btn-positive,
+  .btn-caution,
+  .btn-danger,
+  .ic-btn,
+  .input,
+  .chip,
+  .room-selector,
+  .people-selector {
+    transition: var(--ui-transition-colors);
+  }
+
+  /* Visible keyboard focus ring */
+  button:focus-visible,
+  [role='button']:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  .room-selector:focus-visible,
+  .people-selector:focus-visible,
+  .tab-item:focus-visible {
+    outline: 2px solid var(--tc-link);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toggle__thumb {
+      transition: background-color 150ms ease;
+    }
+
+    .btn-surface,
+    .btn-primary,
+    .btn-positive,
+    .btn-caution,
+    .btn-danger,
+    .ic-btn,
+    .toggle,
+    .segment-btn,
+    .msg__reaction,
+    .context-menu__item > button,
+    .tab-item,
+    .input,
+    .chip,
+    .room-selector,
+    .people-selector {
+      transform: none;
+    }
+  }
+}

@@ -13,8 +13,9 @@
   min-width: 80px;
   padding: var(--sp-extra-tight) var(--sp-normal);
   background-color: transparent;
+  --btn-radius: var(--bo-radius-pill);
   border: none;
-  border-radius: var(--bo-radius);
+  border-radius: var(--btn-radius);
   cursor: pointer;
   @include state.disabled;
 

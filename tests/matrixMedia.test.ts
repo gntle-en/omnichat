@@ -126,4 +126,3 @@ test('resolver falls back to legacy endpoint on 404 and remembers legacy mode wi
   assert.equal(failed, missingUrl);
   assert.equal(resolver.getCachedUrl(missingUrl, 'https://old.example'), null);
 });
-

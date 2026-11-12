@@ -1,5 +1,6 @@
 import appDispatcher from '../dispatcher';
 import cons from '../state/cons';
+import { UiStyle } from '../../util/uiStyle';
 
 export function toggleSystemTheme() {
   appDispatcher.dispatch({
@@ -82,5 +83,12 @@ export function toggleReadReceipts() {
 export function toggleClearUrls() {
   appDispatcher.dispatch({
     type: cons.actions.settings.TOGGLE_CLEAR_URLS,
+  });
+}
+
+export function setUiStyle(uiStyle: UiStyle) {
+  appDispatcher.dispatch({
+    type: cons.actions.settings.SET_UI_STYLE,
+    uiStyle,
   });
 }

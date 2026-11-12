@@ -69,7 +69,7 @@
   margin: 0 var(--sp-extra-tight);
   border-radius: var(--bo-radius);
   &--selected {
-    box-shadow: var(--bs-surface-border);
+    box-shadow: var(--ui-shadow-card, var(--bs-surface-border));
     background-color: var(--bg-surface);
 
     & .context-menu__item > button {

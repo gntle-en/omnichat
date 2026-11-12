@@ -105,6 +105,7 @@ function PeopleDrawer({ roomId }) {
     asyncSearch.on(asyncSearch.RESULT_SENT, handleSearchData);
     mx.on('RoomMember.membership', updateMemberList);
     mx.on('RoomMember.powerLevel', updateMemberList);
+    mx.on('RoomMember.name', updateMemberList);
     return () => {
       isRoomChanged = true;
       setMemberList([]);
@@ -113,6 +114,7 @@ function PeopleDrawer({ roomId }) {
       asyncSearch.removeListener(asyncSearch.RESULT_SENT, handleSearchData);
       mx.removeListener('RoomMember.membership', updateMemberList);
       mx.removeListener('RoomMember.powerLevel', updateMemberList);
+      mx.removeListener('RoomMember.name', updateMemberList);
     };
   }, [roomId, membership]);
 

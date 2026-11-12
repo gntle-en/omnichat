@@ -58,10 +58,12 @@ function useMemberOfMembership(roomId, membership) {
 
     mx.on('RoomMember.membership', updateMemberList);
     mx.on('RoomMember.powerLevel', updateMemberList);
+    mx.on('RoomMember.name', updateMemberList);
     return () => {
       isMounted = false;
       mx.removeListener('RoomMember.membership', updateMemberList);
       mx.removeListener('RoomMember.powerLevel', updateMemberList);
+      mx.removeListener('RoomMember.name', updateMemberList);
     };
   }, [membership]);
 

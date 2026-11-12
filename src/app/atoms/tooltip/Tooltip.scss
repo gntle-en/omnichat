@@ -2,7 +2,7 @@
   padding: var(--sp-extra-tight) var(--sp-normal);
   background-color: var(--bg-tooltip);
   border-radius: var(--bo-radius);
-  box-shadow: var(--bs-popup);
+  box-shadow: var(--ui-shadow-popup, var(--bs-popup));
 
   .text {
     color: var(--tc-tooltip);

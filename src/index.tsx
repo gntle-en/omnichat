@@ -6,8 +6,10 @@ import './index.scss';
 import settings from './client/state/settings';
 
 import App from './app/pages/App';
+import './modern.scss';
 
 settings.getThemeSettings().applyTheme();
+settings.applyUiStyle();
 
 const container = document.getElementById('root');
 if (!container) throw new Error('Root element not found');

@@ -23,18 +23,20 @@ function ProfileEditor({ userId = null }) {
 
   const displayNameRef = useRef(null);
   const [avatarSrc, setAvatarSrc] = useState(
-    user.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null,
+    user?.avatarUrl ? mx.mxcUrlToHttp(user.avatarUrl, 80, 80, 'crop') : null,
   );
-  const [username, setUsername] = useState(user.displayName);
+  const [username, setUsername] = useState(user?.displayName);
   const [disabled, setDisabled] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    mx.getProfileInfo(mx.getUserId()).then((info) => {
-      if (!isMounted) return;
-      setAvatarSrc(info.avatar_url ? mx.mxcUrlToHttp(info.avatar_url, 80, 80, 'crop') : null);
-      setUsername(info.displayname);
-    });
+    mx.getProfileInfo(mx.getUserId())
+      .then((info) => {
+        if (!isMounted) return;
+        setAvatarSrc(info.avatar_url ? mx.mxcUrlToHttp(info.avatar_url, 80, 80, 'crop') : null);
+        setUsername(info.displayname);
+      })
+      .catch(() => {});
     return () => {
       isMounted = false;
     };
@@ -89,7 +91,7 @@ function ProfileEditor({ userId = null }) {
       <Input
         label={`Display name of ${mx.getUserId()}`}
         onChange={onDisplayNameInputChange}
-        value={mx.getUser(mx.getUserId()).displayName}
+        value={mx.getUser(mx.getUserId())?.displayName ?? ''}
         forwardRef={displayNameRef}
       />
       <Button variant="primary" type="submit" disabled={disabled}>

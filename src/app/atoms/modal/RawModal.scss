@@ -6,8 +6,8 @@
   position: relative;
   width: 100%;
   max-height: 100%;
-  border-radius: var(--bo-radius);
-  box-shadow: var(--bs-popup);
+  border-radius: var(--bo-radius-lg);
+  box-shadow: var(--ui-shadow-popup, var(--bs-popup));
   outline: none;
   overflow: hidden;
 

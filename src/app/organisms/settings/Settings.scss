@@ -58,8 +58,8 @@
 .settings-window__card {
   margin: var(--sp-normal) 0;
   background-color: var(--bg-surface);
-  border-radius: var(--bo-radius);
-  box-shadow: var(--bs-surface-border);
+  border-radius: var(--bo-radius-lg);
+  box-shadow: var(--ui-shadow-card, var(--bs-surface-border));
   overflow: hidden;
 
   & > .context-menu__header:first-child {
