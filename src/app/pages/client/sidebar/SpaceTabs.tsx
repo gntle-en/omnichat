@@ -447,6 +447,7 @@ function SpaceTab({
               <SidebarAvatar
                 as="button"
                 data-id={space.roomId}
+                data-space-tab={space.roomId}
                 ref={triggerRef}
                 size={folder ? '300' : '400'}
                 onClick={onClick}

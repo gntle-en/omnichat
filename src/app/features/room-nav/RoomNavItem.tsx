@@ -321,12 +321,17 @@ export function RoomNavItem({
       radii="400"
       highlight={unread !== undefined}
       aria-selected={selected}
+      data-room-nav-item=""
       data-hover={!!menuAnchor}
       onContextMenu={handleContextMenu}
       {...hoverProps}
       {...focusWithinProps}
     >
-      <NavLink to={linkPath} onClick={room.isCallRoom() ? handleStartCall : undefined}>
+      <NavLink
+        to={linkPath}
+        data-room-nav-link=""
+        onClick={room.isCallRoom() ? handleStartCall : undefined}
+      >
         <NavItemContent>
           <Box as="span" grow="Yes" alignItems="Center" gap="200">
             <Avatar size="200" radii="400">

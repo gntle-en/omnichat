@@ -31,7 +31,7 @@ import { MatrixClientProvider } from '../../hooks/useMatrixClient';
 import { SpecVersions } from './SpecVersions';
 import { AsyncStatus, useAsyncCallback } from '../../hooks/useAsyncCallback';
 import { useSyncState } from '../../hooks/useSyncState';
-import { stopPropagation } from '../../utils/keyboard';
+import { stopPropagation, useClientNavigationHotkeys } from '../../utils/keyboard';
 import { SyncStatus } from './SyncStatus';
 import { AuthMetadataProvider } from '../../hooks/useAuthMetadata';
 import { getFallbackSession } from '../../state/sessions';
@@ -161,6 +161,7 @@ export function ClientRoot({ children }: ClientRootProps) {
   );
 
   useLogoutListener(mx);
+  useClientNavigationHotkeys();
 
   useEffect(() => {
     if (loadState.status === AsyncStatus.Idle) {
