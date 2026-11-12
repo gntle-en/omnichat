@@ -24,4 +24,3 @@ test('htmlToPlainFallback extracts readable fallback text', () => {
   assert.equal(htmlToPlainFallback('<b>hello</b> <i>world</i>'), 'hello world');
   assert.equal(htmlToPlainFallback('<hr/>'), '<hr/>');
 });
-

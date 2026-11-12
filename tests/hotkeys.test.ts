@@ -22,4 +22,3 @@ test('getSpaceHotkeyIndex resolves 1-9 digits within available spaces', () => {
   assert.equal(getSpaceHotkeyIndex('0', 4), null);
   assert.equal(getSpaceHotkeyIndex('a', 4), null);
 });
-

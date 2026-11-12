@@ -85,4 +85,3 @@ export function htmlToPlainFallback(html: string): string {
   const stripped = html.replace(/<[^>]+>/g, '').trim();
   return stripped || html;
 }
-

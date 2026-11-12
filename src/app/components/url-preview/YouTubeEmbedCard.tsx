@@ -106,7 +106,7 @@ export const YouTubeEmbedCard = as<'div', { url: string; ts: number; parsed: Par
               <IconButton
                 type="button"
                 variant="Primary"
-                fill="Solid"
+                fill="Soft"
                 radii="Pill"
                 size="400"
                 aria-label="Play YouTube video"
@@ -122,4 +122,3 @@ export const YouTubeEmbedCard = as<'div', { url: string; ts: number; parsed: Par
     );
   }
 );
-

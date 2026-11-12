@@ -25,4 +25,3 @@ test('parseYouTubeUrl handles watch, short, shorts, live, and non-youtube links'
   assert.equal(parseYouTubeUrl('https://vimeo.com/123456'), undefined);
   assert.equal(parseYouTubeUrl('https://www.youtube.com/channel/UC123'), undefined);
 });
-

@@ -157,7 +157,7 @@ export const MessageEditor = as<'div', MessageEditorProps>(
           },
         };
 
-        return mx.sendMessage(roomId, content);
+        return mx.sendMessage(roomId, content as never);
       }, [clearUrls, mx, editor, roomId, mEvent, isMarkdown, getPrevBodyAndFormattedBody])
     );
 

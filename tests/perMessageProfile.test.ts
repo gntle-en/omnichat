@@ -55,4 +55,3 @@ test('hasSameEffectiveSender prevents collapsing bridged messages across differe
     true
   );
 });
-

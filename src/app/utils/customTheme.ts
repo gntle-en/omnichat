@@ -69,9 +69,12 @@ function deriveAccentScale(
   };
 }
 
-function mergeScale<T extends Record<string, string>>(base: T, override: unknown): T {
+function mergeScale<T extends object>(base: T, override: unknown): T {
   if (!isRecord(override)) return base;
-  const merged: Record<string, string> = { ...base };
+  const merged: Record<string, string> = { ...(base as Record<string, unknown>) } as Record<
+    string,
+    string
+  >;
   Object.keys(base).forEach((key) => {
     const val = validColor(override[key]);
     if (val) merged[key] = val;

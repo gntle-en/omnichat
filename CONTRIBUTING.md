@@ -44,7 +44,7 @@ Issues that are extra friendly to new contributors are tagged with
 
 ["contributor friendly"]: https://github.com/cinnyapp/cinny/issues?q=is%3Aissue%20is%3Aopen%20label%3A%22contributor%20friendly%22
 [sign the cla]: https://github.com/cinnyapp/cla
-[why CLA?]: https://github.com/cinnyapp/cla#but-why
+[why cla?]: https://github.com/cinnyapp/cla#but-why
 
 ### I have a bug! / Something isn't working
 

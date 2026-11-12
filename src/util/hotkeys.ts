@@ -17,4 +17,3 @@ export function getSpaceHotkeyIndex(key: string, totalSpaces: number): number | 
   const idx = Number(key) - 1;
   return idx < totalSpaces ? idx : null;
 }
-

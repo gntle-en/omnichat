@@ -18,6 +18,7 @@ import {
   TextArea,
   toRem,
 } from 'folds';
+import { useAtom } from 'jotai';
 import { isKeyHotkey } from 'is-hotkey';
 import { Page, PageContent, PageHeader } from '../../../components/page';
 import { SequenceCard } from '../../../components/sequence-card';
@@ -141,7 +142,7 @@ function PageZoomInput() {
 }
 
 function CustomThemeEditor({ onClose }: { onClose: () => void }) {
-  const [settings, setSettings] = useSetting(settingsAtom);
+  const [settings, setSettings] = useAtom(settingsAtom);
   const [urlInput, setUrlInput] = useState(settings.customThemeUrl ?? '');
   const [jsonInput, setJsonInput] = useState(settings.customThemeRawJson ?? '');
   const [loading, setLoading] = useState(false);
@@ -239,7 +240,7 @@ function CustomThemeEditor({ onClose }: { onClose: () => void }) {
             type="url"
             name="customThemeUrl"
             value={urlInput}
-            onChange={(evt) => setUrlInput(evt.target.value)}
+            onChange={(evt) => setUrlInput(evt.currentTarget.value)}
             placeholder="https://example.com/theme.json"
             variant="Secondary"
             size="300"
@@ -262,7 +263,7 @@ function CustomThemeEditor({ onClose }: { onClose: () => void }) {
       <Box as="form" onSubmit={handleApplyJson} direction="Column" gap="200">
         <TextArea
           value={jsonInput}
-          onChange={(evt) => setJsonInput(evt.target.value)}
+          onChange={(evt) => setJsonInput(evt.currentTarget.value)}
           placeholder='{"name": "My Theme", "is_dark": true, "colors": {"timeline-background-color": "#0b0e14", "primary-color": "#2a62a6"}}'
           rows={5}
           resize="Vertical"

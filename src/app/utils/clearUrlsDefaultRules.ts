@@ -125,4 +125,3 @@ export const defaultRules = [
   'igshid',
   'share_id@reddit.com',
 ];
-

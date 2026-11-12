@@ -43,4 +43,3 @@ export function hasSameEffectiveSender(
     prevProfile?.avatarUrl === nextProfile?.avatarUrl
   );
 }
-
