@@ -10,6 +10,7 @@ import {
   applyUiStyleToElement,
   clearCustomUiSettingsFromElement,
   getColorSchemeForTheme,
+  isLightColor,
   parseCustomUiSettings,
   parseUiFont,
   parseUiStyle,
@@ -36,6 +37,17 @@ test('parseUiFont defaults to atkinson and accepts valid fonts only', () => {
   assert.equal(parseUiFont('inter'), 'inter');
 });
 
+test('isLightColor calculates contrast luminance accurately for 3 and 6 digit hex', () => {
+  assert.equal(isLightColor('#FFFFFF'), true);
+  assert.equal(isLightColor('#FFF'), true);
+  assert.equal(isLightColor('#E9E9EB'), true);
+  assert.equal(isLightColor('#000000'), false);
+  assert.equal(isLightColor('#000'), false);
+  assert.equal(isLightColor('#007AFF'), false);
+  assert.equal(isLightColor('#1B2234'), false);
+  assert.equal(isLightColor('invalid'), false);
+});
+
 test('parseCustomUiSettings returns defaults for invalid or partial input and validates enum values', () => {
   assert.deepEqual(parseCustomUiSettings(null), DEFAULT_CUSTOM_UI);
   assert.deepEqual(parseCustomUiSettings(undefined), DEFAULT_CUSTOM_UI);
@@ -46,6 +58,7 @@ test('parseCustomUiSettings returns defaults for invalid or partial input and va
     bubbleAlignment: 'left',
     bubbleTail: false,
     outgoingColor: 'surface',
+    incomingColor: '#1B2234',
     backdropBlur: false,
     buttonShape: 'sharp',
   });
@@ -55,6 +68,7 @@ test('parseCustomUiSettings returns defaults for invalid or partial input and va
   assert.equal(custom.bubbleAlignment, 'left');
   assert.equal(custom.bubbleTail, false);
   assert.equal(custom.outgoingColor, 'surface');
+  assert.equal(custom.incomingColor, '#1B2234');
   assert.equal(custom.backdropBlur, false);
   assert.equal(custom.buttonShape, 'sharp');
 });
@@ -77,7 +91,8 @@ test('applyCustomUiSettingsToElement and clearCustomUiSettingsFromElement set an
     bubbleRadius: 'pill',
     bubbleAlignment: 'split',
     bubbleTail: true,
-    outgoingColor: 'ios-blue',
+    outgoingColor: '#007AFF',
+    incomingColor: '#E9E9EB',
     backdropBlur: true,
     buttonShape: 'pill',
   });
@@ -85,8 +100,12 @@ test('applyCustomUiSettingsToElement and clearCustomUiSettingsFromElement set an
   assert.equal(vars.get('--omni-avatar-radius'), '50%');
   assert.equal(vars.get('--omni-bubble-radius'), '18px');
   assert.equal(vars.get('--omni-bubble-tail-radius'), '4px');
+  assert.equal(vars.get('--omni-bubble-alignment'), 'split');
   assert.equal(vars.get('--omni-bubble-outgoing-bg'), '#007AFF');
   assert.equal(vars.get('--omni-bubble-outgoing-color'), '#FFFFFF');
+  assert.equal(vars.get('--omni-bubble-incoming-bg'), '#E9E9EB');
+  // Light incoming background gets dark text
+  assert.equal(vars.get('--omni-bubble-incoming-color'), '#111111');
   assert.equal(vars.get('--omni-backdrop-blur'), 'blur(6px)');
   assert.equal(vars.get('--omni-button-radius'), '9999px');
 

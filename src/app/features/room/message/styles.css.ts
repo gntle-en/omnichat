@@ -9,7 +9,16 @@ export const MessageBaseBubbleCollapsed = style({
 });
 export const MessageBaseBubbleOwn = style({
   display: 'flex',
-  justifyContent: 'flex-end',
+  flexDirection: 'column',
+  alignItems: 'flex-end',
+  width: '100%',
+  paddingRight: config.space.S400,
+});
+export const MessageBaseBubbleIncoming = style({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  width: '100%',
 });
 
 export const MessageOptionsBase = style([
@@ -24,6 +33,10 @@ export const MessageOptionsBase = style([
 export const MessageOptionsBaseIncomingBubble = style({
   left: toRem(44),
   right: 'auto',
+});
+export const MessageOptionsBaseOwnBubble = style({
+  right: toRem(16),
+  left: 'auto',
 });
 export const MessageOptionsBar = style([
   DefaultReset,

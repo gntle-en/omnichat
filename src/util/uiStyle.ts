@@ -4,7 +4,6 @@ export type UiFont = 'atkinson' | 'inter';
 export type AvatarShape = 'circle' | 'squircle' | 'rounded' | 'square';
 export type BubbleRadius = 'pill' | 'rounded' | 'subtle' | 'sharp';
 export type BubbleAlignment = 'split' | 'left';
-export type OutgoingBubbleColor = 'ios-blue' | 'accent' | 'surface';
 export type ButtonShape = 'pill' | 'rounded' | 'sharp';
 
 export interface CustomUiSettings {
@@ -12,7 +11,8 @@ export interface CustomUiSettings {
   bubbleRadius: BubbleRadius;
   bubbleAlignment: BubbleAlignment;
   bubbleTail: boolean;
-  outgoingColor: OutgoingBubbleColor;
+  outgoingColor: string;
+  incomingColor: string;
   backdropBlur: boolean;
   buttonShape: ButtonShape;
 }
@@ -25,7 +25,8 @@ export const DEFAULT_CUSTOM_UI: CustomUiSettings = {
   bubbleRadius: 'pill',
   bubbleAlignment: 'split',
   bubbleTail: true,
-  outgoingColor: 'ios-blue',
+  outgoingColor: '#007AFF',
+  incomingColor: 'surface',
   backdropBlur: true,
   buttonShape: 'pill',
 };
@@ -33,7 +34,6 @@ export const DEFAULT_CUSTOM_UI: CustomUiSettings = {
 const VALID_AVATAR_SHAPES = new Set<AvatarShape>(['circle', 'squircle', 'rounded', 'square']);
 const VALID_BUBBLE_RADII = new Set<BubbleRadius>(['pill', 'rounded', 'subtle', 'sharp']);
 const VALID_BUBBLE_ALIGNMENTS = new Set<BubbleAlignment>(['split', 'left']);
-const VALID_OUTGOING_COLORS = new Set<OutgoingBubbleColor>(['ios-blue', 'accent', 'surface']);
 const VALID_BUTTON_SHAPES = new Set<ButtonShape>(['pill', 'rounded', 'sharp']);
 
 /** Normalize a persisted UI style value to a supported UiStyle. */
@@ -46,10 +46,52 @@ export function parseUiFont(value: unknown): UiFont {
   return value === 'inter' || value === 'atkinson' ? value : DEFAULT_UI_FONT;
 }
 
+/** Determine if a hex color is light to choose readable text contrast. */
+export function isLightColor(hex: string): boolean {
+  const clean = hex.replace('#', '').trim();
+  if (clean.length === 3) {
+    const r = parseInt(clean[0] + clean[0], 16);
+    const g = parseInt(clean[1] + clean[1], 16);
+    const b = parseInt(clean[2] + clean[2], 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 160;
+  }
+  if (clean.length === 6) {
+    const r = parseInt(clean.substring(0, 2), 16);
+    const g = parseInt(clean.substring(2, 4), 16);
+    const b = parseInt(clean.substring(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 > 160;
+  }
+  return false;
+}
+
 /** Normalize partial/persisted custom UI settings. */
 export function parseCustomUiSettings(raw: unknown): CustomUiSettings {
   if (typeof raw !== 'object' || raw === null) return { ...DEFAULT_CUSTOM_UI };
   const r = raw as Record<string, unknown>;
+
+  let { outgoingColor, incomingColor } = DEFAULT_CUSTOM_UI;
+  if (typeof r.outgoingColor === 'string' && r.outgoingColor.trim()) {
+    const trimmed = r.outgoingColor.trim();
+    if (trimmed === 'ios-blue') outgoingColor = '#007AFF';
+    else if (
+      trimmed === 'accent' ||
+      trimmed === 'surface' ||
+      /^#?[0-9a-fA-F]{3,8}$/.test(trimmed)
+    ) {
+      outgoingColor =
+        trimmed.startsWith('#') || trimmed === 'accent' || trimmed === 'surface'
+          ? trimmed
+          : `#${trimmed}`;
+    }
+  }
+
+  if (typeof r.incomingColor === 'string' && r.incomingColor.trim()) {
+    const trimmed = r.incomingColor.trim();
+    if (trimmed === 'surface' || /^#?[0-9a-fA-F]{3,8}$/.test(trimmed)) {
+      incomingColor = trimmed.startsWith('#') || trimmed === 'surface' ? trimmed : `#${trimmed}`;
+    }
+  }
+
   return {
     avatarShape: VALID_AVATAR_SHAPES.has(r.avatarShape as AvatarShape)
       ? (r.avatarShape as AvatarShape)
@@ -61,9 +103,8 @@ export function parseCustomUiSettings(raw: unknown): CustomUiSettings {
       ? (r.bubbleAlignment as BubbleAlignment)
       : DEFAULT_CUSTOM_UI.bubbleAlignment,
     bubbleTail: typeof r.bubbleTail === 'boolean' ? r.bubbleTail : DEFAULT_CUSTOM_UI.bubbleTail,
-    outgoingColor: VALID_OUTGOING_COLORS.has(r.outgoingColor as OutgoingBubbleColor)
-      ? (r.outgoingColor as OutgoingBubbleColor)
-      : DEFAULT_CUSTOM_UI.outgoingColor,
+    outgoingColor,
+    incomingColor,
     backdropBlur:
       typeof r.backdropBlur === 'boolean' ? r.backdropBlur : DEFAULT_CUSTOM_UI.backdropBlur,
     buttonShape: VALID_BUTTON_SHAPES.has(r.buttonShape as ButtonShape)
@@ -130,7 +171,7 @@ export function applyUiStyleToElement(
   element.setAttribute('data-ui-style', parseUiStyle(uiStyle));
 }
 
-/** Apply granular custom UI variables (avatar shape, bubble radii, colors, blur, etc.). */
+/** Apply granular custom UI variables (avatar shape, bubble radii, individual colors, blur, etc.). */
 export function applyCustomUiSettingsToElement(
   element: StyleSettable,
   settings: CustomUiSettings
@@ -140,13 +181,13 @@ export function applyCustomUiSettingsToElement(
   element.style.setProperty('--omni-bubble-radius', bRadius);
   element.style.setProperty('--omni-bubble-tail-radius', settings.bubbleTail ? '4px' : bRadius);
   element.style.setProperty('--omni-bubble-alignment', settings.bubbleAlignment);
-  if (settings.outgoingColor === 'ios-blue') {
-    element.style.setProperty('--omni-bubble-outgoing-bg', '#007AFF');
-    element.style.setProperty('--omni-bubble-outgoing-color', '#FFFFFF');
-  } else if (settings.outgoingColor === 'accent') {
+
+  // Outgoing / Sent bubble colors
+  if (settings.outgoingColor === 'accent') {
     element.style.setProperty('--omni-bubble-outgoing-bg', 'var(--fc-primary-main, #2a62a6)');
     element.style.setProperty('--omni-bubble-outgoing-color', 'var(--fc-primary-on-main, #FFFFFF)');
-  } else {
+    element.style.setProperty('--omni-bubble-outgoing-link', '#CBE5FF');
+  } else if (settings.outgoingColor === 'surface') {
     element.style.setProperty(
       '--omni-bubble-outgoing-bg',
       'var(--fc-surface-variant-container, #2e3238)'
@@ -155,7 +196,38 @@ export function applyCustomUiSettingsToElement(
       '--omni-bubble-outgoing-color',
       'var(--fc-surface-variant-on-container, #FFFFFF)'
     );
+    element.style.setProperty('--omni-bubble-outgoing-link', '#80B5FF');
+  } else {
+    const hex = settings.outgoingColor.startsWith('#')
+      ? settings.outgoingColor
+      : `#${settings.outgoingColor}`;
+    const light = isLightColor(hex);
+    element.style.setProperty('--omni-bubble-outgoing-bg', hex);
+    element.style.setProperty('--omni-bubble-outgoing-color', light ? '#111111' : '#FFFFFF');
+    element.style.setProperty('--omni-bubble-outgoing-link', light ? '#0055BB' : '#CBE5FF');
   }
+
+  // Incoming / Received bubble colors
+  if (settings.incomingColor === 'surface' || !settings.incomingColor) {
+    element.style.setProperty(
+      '--omni-bubble-incoming-bg',
+      'var(--fc-surface-variant-container, #2e3238)'
+    );
+    element.style.setProperty(
+      '--omni-bubble-incoming-color',
+      'var(--fc-surface-variant-on-container, #FFFFFF)'
+    );
+    element.style.setProperty('--omni-bubble-incoming-link', 'var(--tc-link, #5e9eff)');
+  } else {
+    const hex = settings.incomingColor.startsWith('#')
+      ? settings.incomingColor
+      : `#${settings.incomingColor}`;
+    const light = isLightColor(hex);
+    element.style.setProperty('--omni-bubble-incoming-bg', hex);
+    element.style.setProperty('--omni-bubble-incoming-color', light ? '#111111' : '#FFFFFF');
+    element.style.setProperty('--omni-bubble-incoming-link', light ? '#0055BB' : '#CBE5FF');
+  }
+
   element.style.setProperty('--omni-backdrop-blur', settings.backdropBlur ? 'blur(6px)' : 'none');
   element.style.setProperty('--omni-button-radius', getButtonRadiusCss(settings.buttonShape));
 }
@@ -167,6 +239,10 @@ export function clearCustomUiSettingsFromElement(element: StyleSettable): void {
   element.style.removeProperty('--omni-bubble-alignment');
   element.style.removeProperty('--omni-bubble-outgoing-bg');
   element.style.removeProperty('--omni-bubble-outgoing-color');
+  element.style.removeProperty('--omni-bubble-outgoing-link');
+  element.style.removeProperty('--omni-bubble-incoming-bg');
+  element.style.removeProperty('--omni-bubble-incoming-color');
+  element.style.removeProperty('--omni-bubble-incoming-link');
   element.style.removeProperty('--omni-backdrop-blur');
   element.style.removeProperty('--omni-button-radius');
 }

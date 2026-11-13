@@ -50,9 +50,9 @@ import {
   DEFAULT_CUSTOM_UI,
   DEFAULT_UI_FONT,
   DEFAULT_UI_STYLE,
-  OutgoingBubbleColor,
   UiFont,
   UiStyle,
+  isLightColor,
 } from '../../../../util/uiStyle';
 import {
   CustomThemePayload,
@@ -126,10 +126,22 @@ const BUBBLE_ALIGN_OPTIONS: SegmentOption<BubbleAlignment>[] = [
   { id: 'left', label: 'All Left-Aligned' },
 ];
 
-const OUTGOING_COLOR_OPTIONS: SegmentOption<OutgoingBubbleColor>[] = [
-  { id: 'ios-blue', label: 'iOS Blue (#007AFF)' },
-  { id: 'accent', label: 'Theme Accent' },
-  { id: 'surface', label: 'Neutral Gray' },
+const OUTGOING_COLOR_PRESETS = [
+  { id: '#007AFF', label: 'iOS Blue', color: '#007AFF' },
+  { id: '#34C759', label: 'Green', color: '#34C759' },
+  { id: '#2AABEE', label: 'Telegram Cyan', color: '#2AABEE' },
+  { id: '#8B5CF6', label: 'Purple', color: '#8B5CF6' },
+  { id: '#FF6B6B', label: 'Coral', color: '#FF6B6B' },
+  { id: 'accent', label: 'Theme Accent', color: '#2a62a6' },
+];
+
+const INCOMING_COLOR_PRESETS = [
+  { id: 'surface', label: 'Theme Surface', color: '#2e3238' },
+  { id: '#26252A', label: 'Dark Slate', color: '#26252A' },
+  { id: '#1E1F22', label: 'Discord Gray', color: '#1E1F22' },
+  { id: '#1B2234', label: 'Deep Navy', color: '#1B2234' },
+  { id: '#E9E9EB', label: 'Light Gray', color: '#E9E9EB' },
+  { id: '#2D2A2E', label: 'Charcoal', color: '#2D2A2E' },
 ];
 
 const BUTTON_SHAPE_OPTIONS: SegmentOption<ButtonShape>[] = [
@@ -137,6 +149,265 @@ const BUTTON_SHAPE_OPTIONS: SegmentOption<ButtonShape>[] = [
   { id: 'rounded', label: 'Rounded' },
   { id: 'sharp', label: 'Sharp' },
 ];
+
+function ColorPickerRow({
+  label,
+  description,
+  currentColor,
+  presets,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  currentColor: string;
+  presets: { id: string; label: string; color: string }[];
+  onChange: (color: string) => void;
+}) {
+  const [customHex, setCustomHex] = useState(currentColor.startsWith('#') ? currentColor : '');
+
+  useEffect(() => {
+    if (currentColor.startsWith('#')) {
+      setCustomHex(currentColor);
+    } else {
+      setCustomHex('');
+    }
+  }, [currentColor]);
+
+  const handleHexChange: ChangeEventHandler<HTMLInputElement> = (e) => {
+    const val = e.target.value;
+    setCustomHex(val);
+    if (/^#?[0-9a-fA-F]{3,8}$/.test(val)) {
+      onChange(val.startsWith('#') ? val : `#${val}`);
+    }
+  };
+
+  const isPresetActive = (presetId: string) =>
+    currentColor.toLowerCase() === presetId.toLowerCase();
+
+  const inputId = `color-picker-${label.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase()}`;
+
+  return (
+    <SettingTile title={label} description={description}>
+      <Box direction="Column" gap="200" style={{ paddingTop: toRem(6), width: '100%' }}>
+        <Box wrap="Wrap" gap="200" alignItems="Center">
+          {presets.map((preset) => {
+            const active = isPresetActive(preset.id);
+            return (
+              <Button
+                key={preset.id}
+                type="button"
+                size="300"
+                variant={active ? 'Primary' : 'Secondary'}
+                fill={active ? 'Solid' : 'Soft'}
+                outlined={active}
+                radii="Pill"
+                aria-pressed={active}
+                onClick={() => onChange(preset.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: toRem(8),
+                }}
+              >
+                <span
+                  style={{
+                    width: toRem(12),
+                    height: toRem(12),
+                    borderRadius: '50%',
+                    backgroundColor: preset.color,
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    display: 'inline-block',
+                    flexShrink: 0,
+                  }}
+                />
+                <Text size="B300">{preset.label}</Text>
+              </Button>
+            );
+          })}
+        </Box>
+
+        <Box gap="200" alignItems="Center">
+          <label
+            htmlFor={inputId}
+            style={{
+              position: 'relative',
+              width: toRem(32),
+              height: toRem(32),
+              borderRadius: '50%',
+              backgroundColor: currentColor.startsWith('#') ? currentColor : '#007AFF',
+              border: '2px solid rgba(255, 255, 255, 0.4)',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+            title="Open color palette"
+          >
+            <span style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>{label}</span>
+            <input
+              id={inputId}
+              type="color"
+              aria-label={label}
+              value={currentColor.startsWith('#') ? currentColor : '#007AFF'}
+              onChange={(e) => {
+                onChange(e.target.value);
+                setCustomHex(e.target.value);
+              }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: 'pointer',
+              }}
+            />
+          </label>
+          <Input
+            size="300"
+            radii="300"
+            style={{ width: toRem(120) }}
+            placeholder="#007AFF"
+            value={customHex}
+            onChange={handleHexChange}
+          />
+          <Text size="T200" priority="300">
+            Click swatch for picker or enter hex
+          </Text>
+        </Box>
+      </Box>
+    </SettingTile>
+  );
+}
+
+function BubblePreviewCard({
+  outgoingColor,
+  incomingColor,
+  tail,
+  radius,
+}: {
+  outgoingColor: string;
+  incomingColor: string;
+  tail: boolean;
+  radius: BubbleRadius;
+}) {
+  const getRadiusVal = (r: BubbleRadius) => {
+    switch (r) {
+      case 'pill':
+        return '18px';
+      case 'rounded':
+        return '12px';
+      case 'subtle':
+        return '6px';
+      case 'sharp':
+        return '0px';
+      default:
+        return '18px';
+    }
+  };
+  const rVal = getRadiusVal(radius);
+  const tailRadius = tail ? '4px' : rVal;
+
+  const getBubbleStyle = (colorValue: string) => {
+    if (colorValue === 'accent') {
+      return {
+        bg: 'var(--fc-primary-main, #2A62A6)',
+        fg: '#FFFFFF',
+      };
+    }
+    if (colorValue === 'surface') {
+      return {
+        bg: 'var(--fc-surface-variant-container, #2e3238)',
+        fg: 'var(--fc-surface-variant-on-container, #FFFFFF)',
+      };
+    }
+    const hex = colorValue.startsWith('#') ? colorValue : `#${colorValue}`;
+    const light = isLightColor(hex);
+    return {
+      bg: hex,
+      fg: light ? '#111111' : '#FFFFFF',
+    };
+  };
+
+  const incomingStyle = getBubbleStyle(incomingColor);
+  const outgoingStyle = getBubbleStyle(outgoingColor);
+
+  return (
+    <Box
+      direction="Column"
+      gap="200"
+      style={{
+        padding: toRem(16),
+        backgroundColor: 'var(--fc-surface-container, rgba(0, 0, 0, 0.15))',
+        borderRadius: toRem(12),
+        border: '1px solid var(--fc-outline, rgba(255, 255, 255, 0.08))',
+        width: '100%',
+      }}
+    >
+      <Text size="T200" priority="300" style={{ fontWeight: 600, textTransform: 'uppercase' }}>
+        Live Preview
+      </Text>
+
+      {/* Received Message */}
+      <Box style={{ width: '100%', justifyContent: 'flex-start' }}>
+        <Box
+          style={{
+            maxWidth: '75%',
+            backgroundColor: incomingStyle.bg,
+            color: incomingStyle.fg,
+            borderRadius: rVal,
+            borderBottomLeftRadius: tailRadius,
+            padding: `${toRem(8)} ${toRem(14)}`,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+          }}
+          direction="Column"
+          gap="100"
+        >
+          <Text size="T300" style={{ color: incomingStyle.fg }}>
+            Hey! Check out this new custom iOS bubble styling.
+          </Text>
+          <Text
+            size="C400"
+            style={{ color: incomingStyle.fg, opacity: 0.65, alignSelf: 'flex-start' }}
+          >
+            10:41 AM
+          </Text>
+        </Box>
+      </Box>
+
+      {/* Sent Message */}
+      <Box style={{ width: '100%', justifyContent: 'flex-end' }}>
+        <Box
+          style={{
+            maxWidth: '75%',
+            backgroundColor: outgoingStyle.bg,
+            color: outgoingStyle.fg,
+            borderRadius: rVal,
+            borderBottomRightRadius: tailRadius,
+            padding: `${toRem(8)} ${toRem(14)}`,
+            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+          }}
+          direction="Column"
+          gap="100"
+        >
+          <Text size="T300" style={{ color: outgoingStyle.fg }}>
+            Looks super clean and personalized! 🚀
+          </Text>
+          <Text
+            size="C400"
+            style={{ color: outgoingStyle.fg, opacity: 0.65, alignSelf: 'flex-end' }}
+          >
+            10:42 AM
+          </Text>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
 
 function CustomUiEditor() {
   const [customUi, setCustomUi] = useSetting(settingsAtom, 'customUi');
@@ -162,6 +433,13 @@ function CustomUiEditor() {
           Fine-tune every visual detail of OmniChat to your exact preference.
         </Text>
       </Box>
+
+      <BubblePreviewCard
+        outgoingColor={active.outgoingColor}
+        incomingColor={active.incomingColor}
+        tail={active.bubbleTail}
+        radius={active.bubbleRadius}
+      />
 
       <SettingTile title="Avatar Shape">
         <Box style={{ paddingTop: toRem(4) }}>
@@ -193,15 +471,21 @@ function CustomUiEditor() {
         </Box>
       </SettingTile>
 
-      <SettingTile title="Outgoing Bubble Color">
-        <Box style={{ paddingTop: toRem(4) }}>
-          <SegmentGroup
-            options={OUTGOING_COLOR_OPTIONS}
-            selectedId={active.outgoingColor}
-            onSelect={(id) => update({ outgoingColor: id })}
-          />
-        </Box>
-      </SettingTile>
+      <ColorPickerRow
+        label="Sent Messages Color"
+        description="Pick a preset or custom hex color for messages you send."
+        currentColor={active.outgoingColor}
+        presets={OUTGOING_COLOR_PRESETS}
+        onChange={(col) => update({ outgoingColor: col })}
+      />
+
+      <ColorPickerRow
+        label="Received Messages Color"
+        description="Pick a preset or custom hex color for messages received from others."
+        currentColor={active.incomingColor}
+        presets={INCOMING_COLOR_PRESETS}
+        onChange={(col) => update({ incomingColor: col })}
+      />
 
       <SettingTile
         title="Speech Bubble Tail"

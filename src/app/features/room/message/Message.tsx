@@ -899,6 +899,7 @@ export const Message = as<'div', MessageProps>(
         className={classNames(css.MessageBase, className, {
           [css.MessageBaseBubbleCollapsed]: isBubble && collapse,
           [css.MessageBaseBubbleOwn]: isOwnBubble,
+          [css.MessageBaseBubbleIncoming]: isBubble && !isOwn,
         })}
         tabIndex={0}
         space={messageSpacing}
@@ -914,6 +915,7 @@ export const Message = as<'div', MessageProps>(
           <div
             className={classNames(css.MessageOptionsBase, {
               [css.MessageOptionsBaseIncomingBubble]: isBubble && !isOwn,
+              [css.MessageOptionsBaseOwnBubble]: isBubble && isOwn,
             })}
           >
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">

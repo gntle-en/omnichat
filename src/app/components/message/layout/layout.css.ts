@@ -223,21 +223,40 @@ export const BubbleMetaIncoming = style({
   justifyContent: 'flex-start',
 });
 
+globalStyle(
+  `${BubbleContentOwn} p, ${BubbleContentOwn} span:not([data-emoji]), ${BubbleContentOwn} div`,
+  {
+    color: 'inherit',
+  }
+);
+
+globalStyle(
+  `${BubbleContentIncoming} p, ${BubbleContentIncoming} span:not([data-emoji]), ${BubbleContentIncoming} div`,
+  {
+    color: 'inherit',
+  }
+);
+
 globalStyle(`${BubbleContentOwn} a`, {
-  color: '#CBE5FF',
+  color: 'var(--omni-bubble-outgoing-link, #CBE5FF)',
+  textDecoration: 'underline',
+});
+
+globalStyle(`${BubbleContentIncoming} a`, {
+  color: 'var(--omni-bubble-incoming-link, var(--tc-link, #5e9eff))',
   textDecoration: 'underline',
 });
 
 globalStyle(`${BubbleContentOwn} code`, {
   backgroundColor: 'rgba(255, 255, 255, 0.22)',
-  color: '#FFFFFF',
+  color: 'inherit',
   borderRadius: toRem(4),
   padding: `${toRem(1)} ${toRem(4)}`,
 });
 
 globalStyle(`${BubbleContentOwn} pre`, {
   backgroundColor: 'rgba(0, 0, 0, 0.28)',
-  color: '#FFFFFF',
+  color: 'inherit',
   borderRadius: toRem(8),
 });
 
