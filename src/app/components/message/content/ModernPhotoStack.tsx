@@ -48,7 +48,7 @@ function StackPhotoCard({
 
   const [srcState, loadSrc] = useAsyncCallback(
     useCallback(async () => {
-      const mediaUrl = mxcUrlToHttp(mx, photo.url, useAuthentication, 500, 500, 'crop');
+      const mediaUrl = mxcUrlToHttp(mx, photo.url, useAuthentication);
       if (!mediaUrl) throw new Error('Invalid media URL');
       if (photo.encInfo) {
         const fileContent = await downloadEncryptedMedia(mediaUrl, (encBuf) =>

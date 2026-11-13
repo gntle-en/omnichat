@@ -14,11 +14,24 @@ export type PhotoStackItem = {
 };
 
 /**
+ * Safely extracts event timestamp, with fallback to localTimestamp for pending / local echo events.
+ */
+export function getEventTs(mEvent: MatrixEvent): number {
+  const ts = mEvent.getTs();
+  if (typeof ts === 'number' && !Number.isNaN(ts) && ts > 0) return ts;
+  const localTs = (mEvent as any).localTimestamp ?? (mEvent as any)._localTimestamp;
+  if (typeof localTs === 'number' && !Number.isNaN(localTs) && localTs > 0) return localTs;
+  return 0;
+}
+
+/**
  * Extract photo metadata from a MatrixEvent if it represents an image attachment.
  */
 export function matrixEventToPhotoStackItem(mEvent: MatrixEvent): PhotoStackItem | null {
   if (mEvent.isRedacted()) return null;
-  const content = mEvent.getContent();
+  const content = (mEvent.getClearContent?.() ?? mEvent.getContent?.()) as
+    | Record<string, any>
+    | undefined;
   if (!content) return null;
 
   const { msgtype } = content;
@@ -37,7 +50,7 @@ export function matrixEventToPhotoStackItem(mEvent: MatrixEvent): PhotoStackItem
     encInfo: content.file,
     markedAsSpoiler: content['org.matrix.msc3720.spoiler'] || content.spoiler,
     spoilerReason: content['org.matrix.msc3720.spoiler_reason'],
-    ts: mEvent.getTs(),
+    ts: getEventTs(mEvent),
   };
 }
 
@@ -61,7 +74,9 @@ export function findPhotoCluster(
   }
 
   // Check if currentEvent has internal multiple images array (e.g. MSC3801 / custom gallery)
-  const content = currentEvent.getContent();
+  const content = (currentEvent.getClearContent?.() ?? currentEvent.getContent?.()) as
+    | Record<string, any>
+    | undefined;
   if (content && Array.isArray(content.images) && content.images.length >= 2) {
     const internalCluster: PhotoStackItem[] = (content.images as any[])
       .map((img: any, idx: number): PhotoStackItem | null => {
@@ -74,7 +89,7 @@ export function findPhotoCluster(
           mimeType: img.info?.mimetype,
           info: img.info,
           encInfo: img.file,
-          ts: currentEvent.getTs(),
+          ts: getEventTs(currentEvent),
         };
       })
       .filter((x): x is PhotoStackItem => x !== null);
@@ -96,11 +111,15 @@ export function findPhotoCluster(
       prevEvent &&
       !prevEvent.isRedacted() &&
       matrixEventToPhotoStackItem(prevEvent) &&
-      prevEvent.getSender() === currentEvent.getSender() &&
-      Math.abs(currentEvent.getTs() - prevEvent.getTs()) < 120_000
+      prevEvent.getSender() === currentEvent.getSender()
     ) {
-      // Already absorbed by the head photo event
-      return { isHead: false, cluster: null };
+      const curTs = getEventTs(currentEvent);
+      const prevTs = getEventTs(prevEvent);
+      const isPendingMatch = curTs === 0 || prevTs === 0;
+      if (isPendingMatch || Math.abs(curTs - prevTs) < 120_000) {
+        // Already absorbed by the head photo event
+        return { isHead: false, cluster: null };
+      }
     }
   }
 
@@ -114,13 +133,19 @@ export function findPhotoCluster(
     if (
       nextEvent &&
       !nextEvent.isRedacted() &&
-      nextEvent.getSender() === currentEvent.getSender() &&
-      Math.abs(nextEvent.getTs() - currentEvent.getTs()) < 120_000
+      nextEvent.getSender() === currentEvent.getSender()
     ) {
-      const nextItem = matrixEventToPhotoStackItem(nextEvent);
-      if (nextItem) {
-        cluster.push(nextItem);
-        forwardIndex += 1;
+      const curTs = getEventTs(currentEvent);
+      const nextTs = getEventTs(nextEvent);
+      const isPendingMatch = curTs === 0 || nextTs === 0;
+      if (isPendingMatch || Math.abs(nextTs - curTs) < 120_000) {
+        const nextItem = matrixEventToPhotoStackItem(nextEvent);
+        if (nextItem) {
+          cluster.push(nextItem);
+          forwardIndex += 1;
+        } else {
+          break;
+        }
       } else {
         break;
       }

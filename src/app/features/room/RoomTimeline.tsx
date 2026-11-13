@@ -20,6 +20,7 @@ import {
   IContent,
   MatrixClient,
   MatrixEvent,
+  MatrixEventEvent,
   Room,
   RoomEvent,
   RoomEventHandlerMap,
@@ -409,6 +410,37 @@ const useLiveTimelineRefresh = (room: Room, onRefresh: () => void) => {
   }, [room, onRefresh]);
 };
 
+const useTimelineDecryptionRefresh = (room: Room, onRefresh: () => void) => {
+  useEffect(() => {
+    let timer: number | undefined;
+    const debouncedRefresh = () => {
+      if (timer !== undefined) return;
+      timer = window.setTimeout(() => {
+        timer = undefined;
+        onRefresh();
+      }, 60);
+    };
+
+    const handleDecrypted = (mEvent: MatrixEvent) => {
+      if (mEvent.getRoomId() !== room.roomId) return;
+      debouncedRefresh();
+    };
+
+    const handleLocalEcho = (mEvent: MatrixEvent, eventRoom?: Room) => {
+      if (eventRoom?.roomId !== room.roomId) return;
+      debouncedRefresh();
+    };
+
+    room.client.on(MatrixEventEvent.Decrypted, handleDecrypted);
+    room.on(RoomEvent.LocalEchoUpdated, handleLocalEcho);
+    return () => {
+      if (timer !== undefined) window.clearTimeout(timer);
+      room.client.removeListener(MatrixEventEvent.Decrypted, handleDecrypted);
+      room.removeListener(RoomEvent.LocalEchoUpdated, handleLocalEcho);
+    };
+  }, [room, onRefresh]);
+};
+
 const getInitialTimeline = (room: Room) => {
   const linkedTimelines = getLinkedTimelines(getLiveTimeline(room));
   const evLength = getTimelinesEventsCount(linkedTimelines);
@@ -691,6 +723,13 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
         setTimeline(getInitialTimeline(room));
       }
     }, [room, liveTimelineLinked])
+  );
+
+  useTimelineDecryptionRefresh(
+    room,
+    useCallback(() => {
+      setTimeline((ct) => ({ ...ct }));
+    }, [])
   );
 
   // Stay at bottom when room editor resize
@@ -1143,7 +1182,14 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           </Message>
         );
       },
-      [MessageEvent.RoomMessageEncrypted]: (mEventId, mEvent, item, timelineSet, collapse) => {
+      [MessageEvent.RoomMessageEncrypted]: (
+        mEventId,
+        mEvent,
+        item,
+        timelineSet,
+        collapse,
+        photoStack
+      ) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
@@ -1224,6 +1270,15 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
                     />
                   );
                 if (mEvent.getType() === MessageEvent.RoomMessage) {
+                  if (photoStack && photoStack.length >= 2) {
+                    return (
+                      <ModernPhotoStack
+                        photos={photoStack}
+                        isOwn={mEvent.getSender() === mx.getUserId()}
+                      />
+                    );
+                  }
+
                   const editedEvent = getEditedEvent(mEventId, mEvent, timelineSet);
                   const getContent = (() =>
                     editedEvent?.getContent()['m.new_content'] ??
