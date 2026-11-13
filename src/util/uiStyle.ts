@@ -38,7 +38,9 @@ const VALID_BUTTON_SHAPES = new Set<ButtonShape>(['pill', 'rounded', 'sharp']);
 
 /** Normalize a persisted UI style value to a supported UiStyle. */
 export function parseUiStyle(value: unknown): UiStyle {
-  return value === 'classic' || value === 'modern' || value === 'custom' ? value : DEFAULT_UI_STYLE;
+  return value === 'classic' || value === 'modern' || value === 'custom'
+    ? value
+    : DEFAULT_UI_STYLE;
 }
 
 /** Normalize a persisted UI font value to a supported UiFont. */
@@ -228,7 +230,10 @@ export function applyCustomUiSettingsToElement(
     element.style.setProperty('--omni-bubble-incoming-link', light ? '#0055BB' : '#CBE5FF');
   }
 
-  element.style.setProperty('--omni-backdrop-blur', settings.backdropBlur ? 'blur(6px)' : 'none');
+  element.style.setProperty(
+    '--omni-backdrop-blur',
+    settings.backdropBlur ? 'blur(6px)' : 'none'
+  );
   element.style.setProperty('--omni-button-radius', getButtonRadiusCss(settings.buttonShape));
 }
 
