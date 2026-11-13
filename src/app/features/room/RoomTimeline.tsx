@@ -2,6 +2,7 @@
 import React, {
   Dispatch,
   MouseEventHandler,
+  ReactNode,
   RefObject,
   SetStateAction,
   useCallback,
@@ -63,8 +64,10 @@ import {
   RedactedContent,
   MSticker,
   ImageContent,
+  ModernPhotoStack,
   EventContent,
 } from '../../components/message';
+import { findPhotoCluster, PhotoStackItem } from '../../utils/photoCluster';
 import {
   factoryRenderLinkifyWithMention,
   getReactCustomHtmlParser,
@@ -1035,10 +1038,10 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
     );
 
   const renderMatrixEvent = useMatrixEventRenderer<
-    [string, MatrixEvent, number, EventTimelineSet, boolean]
+    [string, MatrixEvent, number, EventTimelineSet, boolean, PhotoStackItem[] | undefined]
   >(
     {
-      [MessageEvent.RoomMessage]: (mEventId, mEvent, item, timelineSet, collapse) => {
+      [MessageEvent.RoomMessage]: (mEventId, mEvent, item, timelineSet, collapse, photoStack) => {
         const reactionRelations = getEventReactions(timelineSet, mEventId);
         const reactions = reactionRelations && reactionRelations.getSortedAnnotationsByKey();
         const hasReactions = reactions && reactions.length > 0;
@@ -1055,6 +1058,30 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           getMemberDisplayName(room, senderId) ??
           getMxIdLocalPart(senderId) ??
           senderId;
+
+        let messageContent: ReactNode;
+        if (mEvent.isRedacted()) {
+          messageContent = renderRedacted(mEvent);
+        } else if (photoStack && photoStack.length >= 2) {
+          messageContent = (
+            <ModernPhotoStack photos={photoStack} isOwn={mEvent.getSender() === mx.getUserId()} />
+          );
+        } else {
+          messageContent = (
+            <RenderMessageContent
+              displayName={senderDisplayName}
+              msgType={mEvent.getContent().msgtype ?? ''}
+              ts={mEvent.getTs()}
+              edited={!!editedEvent}
+              getContent={getContent}
+              mediaAutoLoad={mediaAutoLoad}
+              urlPreview={showUrlPreview}
+              htmlReactParserOptions={htmlReactParserOptions}
+              linkifyOpts={linkifyOpts}
+              outlineAttachment={messageLayout === MessageLayout.Bubble}
+            />
+          );
+        }
 
         return (
           <Message
@@ -1112,22 +1139,7 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
             hour24Clock={hour24Clock}
             dateFormatString={dateFormatString}
           >
-            {mEvent.isRedacted() ? (
-              renderRedacted(mEvent)
-            ) : (
-              <RenderMessageContent
-                displayName={senderDisplayName}
-                msgType={mEvent.getContent().msgtype ?? ''}
-                ts={mEvent.getTs()}
-                edited={!!editedEvent}
-                getContent={getContent}
-                mediaAutoLoad={mediaAutoLoad}
-                urlPreview={showUrlPreview}
-                htmlReactParserOptions={htmlReactParserOptions}
-                linkifyOpts={linkifyOpts}
-                outlineAttachment={messageLayout === MessageLayout.Bubble}
-              />
-            )}
+            {messageContent}
           </Message>
         );
       },
@@ -1686,6 +1698,24 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
       prevEvent.getType() === mEvent.getType() &&
       minuteDifference(prevEvent.getTs(), mEvent.getTs()) < 2;
 
+    const isModernOrBubble =
+      messageLayout === MessageLayout.Modern || messageLayout === MessageLayout.Bubble;
+
+    const getEventAt = (idx: number) => {
+      const [tLine, bIdx] = getTimelineAndBaseIndex(timeline.linkedTimelines, idx);
+      if (!tLine) return undefined;
+      return getTimelineEvent(tLine, getTimelineRelativeIndex(idx, bIdx));
+    };
+
+    const photoCluster = isModernOrBubble
+      ? findPhotoCluster(item, () => getItems().length, getEventAt)
+      : null;
+
+    if (photoCluster && !photoCluster.isHead) {
+      prevEvent = mEvent;
+      return null;
+    }
+
     const eventJSX = reactionOrEditEvent(mEvent)
       ? null
       : renderMatrixEvent(
@@ -1695,7 +1725,8 @@ export function RoomTimeline({ room, eventId, roomInputRef, editor }: RoomTimeli
           mEvent,
           item,
           timelineSet,
-          collapsed
+          collapsed,
+          photoCluster?.cluster ?? undefined
         );
     prevEvent = mEvent;
     isPrevRendered = !!eventJSX;
