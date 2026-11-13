@@ -57,7 +57,7 @@ export function findPhotoCluster(
 ): PhotoClusterResult {
   const currentEvent = getEventAt(item);
   if (!currentEvent || currentEvent.isRedacted()) {
-    return { isHead: false, cluster: null };
+    return { isHead: true, cluster: null };
   }
 
   // Check if currentEvent has internal multiple images array (e.g. MSC3801 / custom gallery)
@@ -86,7 +86,7 @@ export function findPhotoCluster(
 
   const currentItem = matrixEventToPhotoStackItem(currentEvent);
   if (!currentItem) {
-    return { isHead: false, cluster: null };
+    return { isHead: true, cluster: null };
   }
 
   // Check if preceded by an image from the same sender within 2 minutes

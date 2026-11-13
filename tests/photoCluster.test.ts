@@ -133,3 +133,41 @@ test('findPhotoCluster extracts internal content.images array if present', () =>
   assert.equal(res.cluster[1].body, 'Garden 2');
   assert.equal(res.cluster[2].body, 'Garden 3');
 });
+
+test('findPhotoCluster preserves text and non-image messages as isHead: true', () => {
+  const events = [
+    createMockEvent({ id: 'txt1', sender: '@alice:hs', ts: 10_000, msgtype: 'm.text' }),
+    createMockEvent({ id: 'p1', sender: '@alice:hs', ts: 12_000 }),
+    createMockEvent({ id: 'p2', sender: '@alice:hs', ts: 14_000 }),
+    createMockEvent({ id: 'txt2', sender: '@alice:hs', ts: 16_000, msgtype: 'm.text' }),
+    createMockEvent({ id: 'red1', sender: '@alice:hs', ts: 18_000, redacted: true }),
+  ];
+
+  const getEventAt = (idx: number) => events[idx];
+  const getCount = () => events.length;
+
+  // txt1 is a text message: MUST NOT be swallowed
+  const resTxt1 = findPhotoCluster(0, getCount, getEventAt);
+  assert.equal(resTxt1.isHead, true);
+  assert.equal(resTxt1.cluster, null);
+
+  // p1 is head of 2-image stack
+  const resP1 = findPhotoCluster(1, getCount, getEventAt);
+  assert.equal(resP1.isHead, true);
+  assert.ok(resP1.cluster);
+  assert.equal(resP1.cluster.length, 2);
+
+  // p2 is absorbed into p1
+  const resP2 = findPhotoCluster(2, getCount, getEventAt);
+  assert.equal(resP2.isHead, false);
+
+  // txt2 is regular text: MUST NOT be swallowed
+  const resTxt2 = findPhotoCluster(3, getCount, getEventAt);
+  assert.equal(resTxt2.isHead, true);
+  assert.equal(resTxt2.cluster, null);
+
+  // red1 is redacted: MUST NOT be swallowed
+  const resRed1 = findPhotoCluster(4, getCount, getEventAt);
+  assert.equal(resRed1.isHead, true);
+  assert.equal(resRed1.cluster, null);
+});
