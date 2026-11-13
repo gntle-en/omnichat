@@ -38,9 +38,7 @@ const VALID_BUTTON_SHAPES = new Set<ButtonShape>(['pill', 'rounded', 'sharp']);
 
 /** Normalize a persisted UI style value to a supported UiStyle. */
 export function parseUiStyle(value: unknown): UiStyle {
-  return value === 'classic' || value === 'modern' || value === 'custom'
-    ? value
-    : DEFAULT_UI_STYLE;
+  return value === 'classic' || value === 'modern' || value === 'custom' ? value : DEFAULT_UI_STYLE;
 }
 
 /** Normalize a persisted UI font value to a supported UiFont. */
@@ -84,25 +82,6 @@ export function parseCustomUiSettings(raw: unknown): CustomUiSettings {
         trimmed.startsWith('#') || trimmed === 'accent' || trimmed === 'surface'
           ? trimmed
           : `#${trimmed}`;
-    }
-  }
-
-  if (typeof r.incomingColor === 'string' && r.incomingColor.trim()) {
-    const trimmed = r.incomingColor.trim();
-    if (trimmed === 'surface' || /^#?[0-9a-fA-F]{3,8}$/.test(trimmed)) {
-      incomingColor = trimmed.startsWith('#') || trimmed === 'surface' ? trimmed : `#${trimmed}`;
-    }
-  }
-
-
-  let { outgoingColor, incomingColor } = DEFAULT_CUSTOM_UI;
-  if (typeof r.outgoingColor === 'string' && r.outgoingColor.trim()) {
-    const trimmed = r.outgoingColor.trim();
-    if (trimmed === 'ios-blue') outgoingColor = '#007AFF';
-    else if (trimmed === 'accent' || trimmed === 'surface' || /^#?[0-9a-fA-F]{3,8}$/.test(trimmed)) {
-      outgoingColor = trimmed.startsWith('#') || trimmed === 'accent' || trimmed === 'surface'
-        ? trimmed
-        : `#${trimmed}`;
     }
   }
 
@@ -249,32 +228,7 @@ export function applyCustomUiSettingsToElement(
     element.style.setProperty('--omni-bubble-incoming-link', light ? '#0055BB' : '#CBE5FF');
   }
 
-
-  // Incoming / Received bubble colors
-  if (settings.incomingColor === 'surface' || !settings.incomingColor) {
-    element.style.setProperty(
-      '--omni-bubble-incoming-bg',
-      'var(--fc-surface-variant-container, #2e3238)'
-    );
-    element.style.setProperty(
-      '--omni-bubble-incoming-color',
-      'var(--fc-surface-variant-on-container, #FFFFFF)'
-    );
-    element.style.setProperty('--omni-bubble-incoming-link', 'var(--tc-link, #5e9eff)');
-  } else {
-    const hex = settings.incomingColor.startsWith('#')
-      ? settings.incomingColor
-      : `#${settings.incomingColor}`;
-    const light = isLightColor(hex);
-    element.style.setProperty('--omni-bubble-incoming-bg', hex);
-    element.style.setProperty('--omni-bubble-incoming-color', light ? '#111111' : '#FFFFFF');
-    element.style.setProperty('--omni-bubble-incoming-link', light ? '#0055BB' : '#CBE5FF');
-  }
-
-  element.style.setProperty(
-    '--omni-backdrop-blur',
-    settings.backdropBlur ? 'blur(6px)' : 'none'
-  );
+  element.style.setProperty('--omni-backdrop-blur', settings.backdropBlur ? 'blur(6px)' : 'none');
   element.style.setProperty('--omni-button-radius', getButtonRadiusCss(settings.buttonShape));
 }
 

@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  computeScheduleDelayMs,
+  DEFAULT_SEND_LATER_PRESETS,
   EXTENSION_SCHEMA_VERSION,
+  computeScheduleDelayMs,
+  getDelayUntilNextMidnight,
   interpolateTemplate,
   isActionAvailable,
   isSafeHttpUrl,
   parseBackendExtensionsJson,
   resolveBackendExtensions,
+  resolvePresetDelayMs,
 } from '../src/util/backendExtensions.ts';
 
 test('resolveBackendExtensions enables sendLater automatically when MSC4140 is advertised', () => {
@@ -154,6 +157,23 @@ test('interpolateTemplate replaces nested variables and computeScheduleDelayMs v
   const now = Date.UTC(2026, 10, 12, 12, 0, 0);
   assert.equal(computeScheduleDelayMs('2026-11-12T12:10:00Z', now), 600_000);
   assert.equal(computeScheduleDelayMs('2026-11-12T11:59:00Z', now), null);
+});
+
+test('getDelayUntilNextMidnight and resolvePresetDelayMs compute accurate 12am next day birthday delays', () => {
+  const mockNow = new Date('2026-11-13T18:30:00.000Z');
+  const expectedMidnight = new Date(mockNow);
+  expectedMidnight.setDate(expectedMidnight.getDate() + 1);
+  expectedMidnight.setHours(0, 0, 0, 0);
+  const expectedDelay = expectedMidnight.getTime() - mockNow.getTime();
+
+  assert.equal(getDelayUntilNextMidnight(mockNow), expectedDelay);
+
+  const midnightPreset = DEFAULT_SEND_LATER_PRESETS.find((p) => p.id === 'midnight_next_day');
+  assert.ok(midnightPreset, 'Expected midnight_next_day preset in defaults');
+  assert.equal(resolvePresetDelayMs(midnightPreset, mockNow), expectedDelay);
+
+  const fixedPreset = { id: '1h', label: 'In 1 hour', delayMs: 3600000 };
+  assert.equal(resolvePresetDelayMs(fixedPreset, mockNow), 3600000);
 });
 
 test('isActionAvailable enforces room, encryption, power level, and ownership filters', () => {

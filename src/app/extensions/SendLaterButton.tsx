@@ -21,7 +21,11 @@ import {
 } from 'folds';
 import FocusTrap from 'focus-trap-react';
 
-import { computeScheduleDelayMs, SendLaterConfig } from '../../util/backendExtensions';
+import {
+  computeScheduleDelayMs,
+  resolvePresetDelayMs,
+  SendLaterConfig,
+} from '../../util/backendExtensions';
 
 type SendLaterButtonProps = {
   sendLaterConfig: SendLaterConfig;
@@ -97,7 +101,7 @@ export function SendLaterButton({ sendLaterConfig, disabled, onSchedule }: SendL
                   size="300"
                   radii="300"
                   disabled={busy}
-                  onClick={() => handlePickDelay(preset.delayMs)}
+                  onClick={() => handlePickDelay(resolvePresetDelayMs(preset))}
                 >
                   <Text as="span" size="T300" truncate>
                     {preset.label}

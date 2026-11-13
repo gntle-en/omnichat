@@ -7,7 +7,8 @@ export type SendLaterTransport = 'msc4140' | 'http_rpc';
 export type SendLaterPreset = {
   id: string;
   label: string;
-  delayMs: number;
+  delayMs?: number;
+  target?: 'midnight_next_day';
 };
 
 export type SendLaterConfig = {
@@ -103,8 +104,35 @@ export const DEFAULT_SEND_LATER_PRESETS: SendLaterPreset[] = [
   { id: '15m', label: 'In 15 minutes', delayMs: 15 * 60 * 1000 },
   { id: '1h', label: 'In 1 hour', delayMs: 60 * 60 * 1000 },
   { id: '3h', label: 'In 3 hours', delayMs: 3 * 60 * 60 * 1000 },
+  {
+    id: 'midnight_next_day',
+    label: '12:00 AM next day (Birthday 🎂)',
+    target: 'midnight_next_day',
+  },
   { id: '24h', label: 'Tomorrow (same time)', delayMs: 24 * 60 * 60 * 1000 },
 ];
+
+/**
+ * Compute milliseconds until next midnight (12:00 AM of the next calendar day).
+ * Designed for scheduling birthday wishes, announcements, and next-day greetings.
+ */
+export function getDelayUntilNextMidnight(now: Date = new Date()): number {
+  const nextMidnight = new Date(now);
+  nextMidnight.setDate(nextMidnight.getDate() + 1);
+  nextMidnight.setHours(0, 0, 0, 0);
+  return Math.max(nextMidnight.getTime() - now.getTime(), 1000);
+}
+
+/**
+ * Resolve delay in milliseconds for a SendLaterPreset, computing dynamic targets
+ * like `midnight_next_day` relative to the current or provided clock.
+ */
+export function resolvePresetDelayMs(preset: SendLaterPreset, now: Date = new Date()): number {
+  if (preset.target === 'midnight_next_day' || preset.id === 'midnight_next_day') {
+    return getDelayUntilNextMidnight(now);
+  }
+  return typeof preset.delayMs === 'number' && preset.delayMs > 0 ? preset.delayMs : 0;
+}
 
 export const DEFAULT_BACKEND_MANIFEST: BackendExtensionsManifest = {
   schemaVersion: EXTENSION_SCHEMA_VERSION,
@@ -165,16 +193,25 @@ function normalizePresets(rawPresets: unknown): SendLaterPreset[] | undefined {
   rawPresets.forEach((item, index) => {
     if (!isRecord(item)) return;
     if (typeof item.label !== 'string' || !item.label.trim()) return;
-    if (typeof item.delayMs !== 'number' || !Number.isFinite(item.delayMs) || item.delayMs <= 0) {
+    const isTarget = item.target === 'midnight_next_day' || item.id === 'midnight_next_day';
+    const hasValidDelay =
+      typeof item.delayMs === 'number' && Number.isFinite(item.delayMs) && item.delayMs > 0;
+    if (!isTarget && !hasValidDelay) {
       return;
     }
     const id =
       typeof item.id === 'string' && item.id.trim() ? item.id.trim() : `preset-${index + 1}`;
-    presets.push({
+    const preset: SendLaterPreset = {
       id,
       label: item.label.trim(),
-      delayMs: Math.round(item.delayMs),
-    });
+    };
+    if (hasValidDelay) {
+      preset.delayMs = Math.round(item.delayMs as number);
+    }
+    if (isTarget) {
+      preset.target = 'midnight_next_day';
+    }
+    presets.push(preset);
   });
   return presets.length > 0 ? presets : undefined;
 }
