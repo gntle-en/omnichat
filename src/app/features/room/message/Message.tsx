@@ -68,6 +68,7 @@ import { MessageEditor } from './MessageEditor';
 import { UserAvatar } from '../../../components/user-avatar';
 import { copyToClipboard } from '../../../utils/dom';
 import { stopPropagation } from '../../../utils/keyboard';
+import { useIsDirectRoom } from '../../../hooks/useRoom';
 import { getMatrixToRoomEvent } from '../../../plugins/matrix-to';
 import { getViaServers } from '../../../plugins/via-servers';
 import { useMediaAuthentication } from '../../../hooks/useMediaAuthentication';
@@ -716,6 +717,8 @@ export const Message = as<'div', MessageProps>(
     const mx = useMatrixClient();
     const useAuthentication = useMediaAuthentication();
     const senderId = mEvent.getSender() ?? '';
+    const isDirect = useIsDirectRoom();
+    const isOwn = senderId === mx.getUserId();
 
     const [hover, setHover] = useState(false);
     const { hoverProps } = useHover({ onHoverChange: setHover });
@@ -777,12 +780,14 @@ export const Message = as<'div', MessageProps>(
               </Text>
             </>
           )}
-          <Time
-            ts={mEvent.getTs()}
-            compact={messageLayout === MessageLayout.Compact}
-            hour24Clock={hour24Clock}
-            dateFormatString={dateFormatString}
-          />
+          {messageLayout !== MessageLayout.Bubble && (
+            <Time
+              ts={mEvent.getTs()}
+              compact={messageLayout === MessageLayout.Compact}
+              hour24Clock={hour24Clock}
+              dateFormatString={dateFormatString}
+            />
+          )}
         </Box>
       </Box>
     );
@@ -812,8 +817,15 @@ export const Message = as<'div', MessageProps>(
       </AvatarBase>
     );
 
+    const isBubble = messageLayout === MessageLayout.Bubble;
+    const isOwnBubble = isBubble && isOwn;
+
     const msgContentJSX = (
-      <Box direction="Column" alignSelf="Start" style={{ maxWidth: '100%' }}>
+      <Box
+        direction="Column"
+        alignSelf={isOwnBubble ? 'End' : 'Start'}
+        style={{ maxWidth: '100%' }}
+      >
         {reply}
         {edit && onEditId ? (
           <MessageEditor
@@ -830,7 +842,16 @@ export const Message = as<'div', MessageProps>(
         ) : (
           children
         )}
-        {reactions}
+        {reactions && (
+          <div
+            style={{
+              display: 'flex',
+              alignSelf: isOwnBubble ? 'flex-end' : 'flex-start',
+            }}
+          >
+            {reactions}
+          </div>
+        )}
       </Box>
     );
 
@@ -876,7 +897,8 @@ export const Message = as<'div', MessageProps>(
     return (
       <MessageBase
         className={classNames(css.MessageBase, className, {
-          [css.MessageBaseBubbleCollapsed]: messageLayout === MessageLayout.Bubble && collapse,
+          [css.MessageBaseBubbleCollapsed]: isBubble && collapse,
+          [css.MessageBaseBubbleOwn]: isOwnBubble,
         })}
         tabIndex={0}
         space={messageSpacing}
@@ -889,7 +911,11 @@ export const Message = as<'div', MessageProps>(
         ref={ref}
       >
         {!edit && (hover || !!menuAnchor || !!emojiBoardAnchor) && (
-          <div className={css.MessageOptionsBase}>
+          <div
+            className={classNames(css.MessageOptionsBase, {
+              [css.MessageOptionsBaseIncomingBubble]: isBubble && !isOwn,
+            })}
+          >
             <Menu className={css.MessageOptionsBar} variant="SurfaceVariant">
               <Box gap="100">
                 {canSendReaction && (
@@ -1140,7 +1166,21 @@ export const Message = as<'div', MessageProps>(
           </CompactLayout>
         )}
         {messageLayout === MessageLayout.Bubble && (
-          <BubbleLayout before={avatarJSX} header={headerJSX} onContextMenu={handleContextMenu}>
+          <BubbleLayout
+            before={isOwn ? undefined : avatarJSX}
+            header={isOwn || (isDirect && !collapse) ? undefined : headerJSX}
+            isOwn={isOwn}
+            collapse={collapse}
+            time={
+              <Time
+                ts={mEvent.getTs()}
+                compact={false}
+                hour24Clock={hour24Clock}
+                dateFormatString={dateFormatString}
+              />
+            }
+            onContextMenu={handleContextMenu}
+          >
             {msgContentJSX}
           </BubbleLayout>
         )}

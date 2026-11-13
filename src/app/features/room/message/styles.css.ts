@@ -7,6 +7,10 @@ export const MessageBase = style({
 export const MessageBaseBubbleCollapsed = style({
   paddingTop: 0,
 });
+export const MessageBaseBubbleOwn = style({
+  display: 'flex',
+  justifyContent: 'flex-end',
+});
 
 export const MessageOptionsBase = style([
   DefaultReset,
@@ -17,6 +21,10 @@ export const MessageOptionsBase = style([
     zIndex: 1,
   },
 ]);
+export const MessageOptionsBaseIncomingBubble = style({
+  left: toRem(44),
+  right: 'auto',
+});
 export const MessageOptionsBar = style([
   DefaultReset,
   {

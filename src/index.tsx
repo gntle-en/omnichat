@@ -22,11 +22,18 @@ import { pushSessionToSW } from './sw-session';
 import { getFallbackSession } from './app/state/sessions';
 import { getSettings } from './app/state/settings';
 import { atkinsonFontTheme, modernRadiiTheme, modernShadowTheme } from './config.css';
-import { applyUiFontToElement, applyUiStyleToElement } from './util/uiStyle';
+import {
+  applyCustomUiSettingsToElement,
+  applyUiFontToElement,
+  applyUiStyleToElement,
+} from './util/uiStyle';
 
 const initialSettings = getSettings();
 applyUiStyleToElement(document.documentElement, initialSettings.uiStyle);
 applyUiFontToElement(document.documentElement, initialSettings.uiFont);
+if (initialSettings.uiStyle === 'custom' && initialSettings.customUi) {
+  applyCustomUiSettingsToElement(document.documentElement, initialSettings.customUi);
+}
 
 document.body.classList.add(configClass, varsClass);
 if (initialSettings.uiStyle === 'modern') {

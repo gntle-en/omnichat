@@ -25,7 +25,7 @@ import { SequenceCard } from '../../../components/sequence-card';
 import { SettingTile } from '../../../components/setting-tile';
 import { SequenceCardStyle } from '../styles.css';
 import { useSetting } from '../../../state/hooks/settings';
-import { settingsAtom } from '../../../state/settings';
+import { MessageLayout, settingsAtom } from '../../../state/settings';
 import {
   AyuTheme,
   ButterTheme,
@@ -41,7 +41,19 @@ import {
   useThemeNames,
   useThemes,
 } from '../../../hooks/useTheme';
-import { DEFAULT_UI_FONT, DEFAULT_UI_STYLE, UiFont, UiStyle } from '../../../../util/uiStyle';
+import {
+  AvatarShape,
+  BubbleAlignment,
+  BubbleRadius,
+  ButtonShape,
+  CustomUiSettings,
+  DEFAULT_CUSTOM_UI,
+  DEFAULT_UI_FONT,
+  DEFAULT_UI_STYLE,
+  OutgoingBubbleColor,
+  UiFont,
+  UiStyle,
+} from '../../../../util/uiStyle';
 import {
   CustomThemePayload,
   fetchCustomThemeFromUrl,
@@ -86,7 +98,160 @@ function SegmentGroup<T extends string>({ options, selectedId, onSelect }: Segme
 const UI_STYLE_OPTIONS: SegmentOption<UiStyle>[] = [
   { id: 'modern', label: 'Modern' },
   { id: 'classic', label: 'Classic' },
+  { id: 'custom', label: 'Custom' },
 ];
+
+const MESSAGE_LAYOUT_OPTIONS: SegmentOption<string>[] = [
+  { id: `${MessageLayout.Modern}`, label: 'Modern Timeline' },
+  { id: `${MessageLayout.Bubble}`, label: 'iOS Bubbles' },
+  { id: `${MessageLayout.Compact}`, label: 'Compact' },
+];
+
+const AVATAR_SHAPE_OPTIONS: SegmentOption<AvatarShape>[] = [
+  { id: 'circle', label: 'Circle (50%)' },
+  { id: 'squircle', label: 'Squircle (28%)' },
+  { id: 'rounded', label: 'Rounded (16%)' },
+  { id: 'square', label: 'Square (0px)' },
+];
+
+const BUBBLE_RADIUS_OPTIONS: SegmentOption<BubbleRadius>[] = [
+  { id: 'pill', label: 'iOS Pill (18px)' },
+  { id: 'rounded', label: 'Rounded (12px)' },
+  { id: 'subtle', label: 'Subtle (6px)' },
+  { id: 'sharp', label: 'Sharp (0px)' },
+];
+
+const BUBBLE_ALIGN_OPTIONS: SegmentOption<BubbleAlignment>[] = [
+  { id: 'split', label: 'iOS Split (Right/Left)' },
+  { id: 'left', label: 'All Left-Aligned' },
+];
+
+const OUTGOING_COLOR_OPTIONS: SegmentOption<OutgoingBubbleColor>[] = [
+  { id: 'ios-blue', label: 'iOS Blue (#007AFF)' },
+  { id: 'accent', label: 'Theme Accent' },
+  { id: 'surface', label: 'Neutral Gray' },
+];
+
+const BUTTON_SHAPE_OPTIONS: SegmentOption<ButtonShape>[] = [
+  { id: 'pill', label: 'Pill' },
+  { id: 'rounded', label: 'Rounded' },
+  { id: 'sharp', label: 'Sharp' },
+];
+
+function CustomUiEditor() {
+  const [customUi, setCustomUi] = useSetting(settingsAtom, 'customUi');
+  const active = customUi ?? DEFAULT_CUSTOM_UI;
+
+  const update = (patch: Partial<CustomUiSettings>) => {
+    setCustomUi({
+      ...active,
+      ...patch,
+    });
+  };
+
+  return (
+    <SequenceCard
+      className={SequenceCardStyle}
+      variant="SurfaceVariant"
+      direction="Column"
+      gap="400"
+    >
+      <Box direction="Column" gap="100">
+        <Text size="H4">Custom UI Tuning</Text>
+        <Text size="T300" priority="300">
+          Fine-tune every visual detail of OmniChat to your exact preference.
+        </Text>
+      </Box>
+
+      <SettingTile title="Avatar Shape">
+        <Box style={{ paddingTop: toRem(4) }}>
+          <SegmentGroup
+            options={AVATAR_SHAPE_OPTIONS}
+            selectedId={active.avatarShape}
+            onSelect={(id) => update({ avatarShape: id })}
+          />
+        </Box>
+      </SettingTile>
+
+      <SettingTile title="Bubble Corner Radii">
+        <Box style={{ paddingTop: toRem(4) }}>
+          <SegmentGroup
+            options={BUBBLE_RADIUS_OPTIONS}
+            selectedId={active.bubbleRadius}
+            onSelect={(id) => update({ bubbleRadius: id })}
+          />
+        </Box>
+      </SettingTile>
+
+      <SettingTile title="Bubble Alignment">
+        <Box style={{ paddingTop: toRem(4) }}>
+          <SegmentGroup
+            options={BUBBLE_ALIGN_OPTIONS}
+            selectedId={active.bubbleAlignment}
+            onSelect={(id) => update({ bubbleAlignment: id })}
+          />
+        </Box>
+      </SettingTile>
+
+      <SettingTile title="Outgoing Bubble Color">
+        <Box style={{ paddingTop: toRem(4) }}>
+          <SegmentGroup
+            options={OUTGOING_COLOR_OPTIONS}
+            selectedId={active.outgoingColor}
+            onSelect={(id) => update({ outgoingColor: id })}
+          />
+        </Box>
+      </SettingTile>
+
+      <SettingTile
+        title="Speech Bubble Tail"
+        description="Add authentic iOS iMessage speech-bubble tail curvature to the first/last message in a sequence."
+        after={
+          <Switch
+            variant="Primary"
+            value={active.bubbleTail}
+            onChange={(val) => update({ bubbleTail: val })}
+          />
+        }
+      />
+
+      <SettingTile
+        title="Glass & Backdrop Blur"
+        description="Enable frosted glass blur on modal backdrops and menus."
+        after={
+          <Switch
+            variant="Primary"
+            value={active.backdropBlur}
+            onChange={(val) => update({ backdropBlur: val })}
+          />
+        }
+      />
+
+      <SettingTile title="Button & Control Shapes">
+        <Box style={{ paddingTop: toRem(4) }}>
+          <SegmentGroup
+            options={BUTTON_SHAPE_OPTIONS}
+            selectedId={active.buttonShape}
+            onSelect={(id) => update({ buttonShape: id })}
+          />
+        </Box>
+      </SettingTile>
+
+      <Box justifyContent="End">
+        <Button
+          type="button"
+          size="300"
+          variant="Secondary"
+          fill="Soft"
+          radii="Pill"
+          onClick={() => setCustomUi(DEFAULT_CUSTOM_UI)}
+        >
+          <Text size="B300">Reset to Defaults</Text>
+        </Button>
+      </Box>
+    </SequenceCard>
+  );
+}
 
 const UI_FONT_OPTIONS: SegmentOption<UiFont>[] = [
   { id: 'atkinson', label: 'Atkinson Hyperlegible' },
@@ -446,6 +611,7 @@ type AppearanceProps = {
 export function Appearance({ requestClose }: AppearanceProps) {
   const [uiStyle, setUiStyle] = useSetting(settingsAtom, 'uiStyle');
   const [uiFont, setUiFont] = useSetting(settingsAtom, 'uiFont');
+  const [messageLayout, setMessageLayout] = useSetting(settingsAtom, 'messageLayout');
   const [monochromeMode, setMonochromeMode] = useSetting(settingsAtom, 'monochromeMode');
   const [twitterEmoji, setTwitterEmoji] = useSetting(settingsAtom, 'twitterEmoji');
   const [youtubeEmbed, setYoutubeEmbed] = useSetting(settingsAtom, 'youtubeEmbed');
@@ -479,12 +645,32 @@ export function Appearance({ requestClose }: AppearanceProps) {
                 >
                   <SettingTile
                     title="UI Style"
-                    description="Switch between refined Modern shapes and the original Classic layout. Pairs with any color theme below."
+                    description="Switch between Modern, Classic, or Custom granular styling. Pairs with any color theme below."
                     after={
                       <SegmentGroup
                         options={UI_STYLE_OPTIONS}
                         selectedId={uiStyle ?? DEFAULT_UI_STYLE}
                         onSelect={setUiStyle}
+                      />
+                    }
+                  />
+                </SequenceCard>
+
+                {uiStyle === 'custom' && <CustomUiEditor />}
+
+                <SequenceCard
+                  className={SequenceCardStyle}
+                  variant="SurfaceVariant"
+                  direction="Column"
+                >
+                  <SettingTile
+                    title="Message Layout"
+                    description="Choose between flat Modern timeline, authentic iOS bubble chat with right-aligned outgoing messages, or dense Compact IRC style."
+                    after={
+                      <SegmentGroup
+                        options={MESSAGE_LAYOUT_OPTIONS}
+                        selectedId={`${messageLayout}`}
+                        onSelect={(id) => setMessageLayout(Number(id) as MessageLayout)}
                       />
                     }
                   />

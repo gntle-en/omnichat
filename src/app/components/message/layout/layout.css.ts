@@ -1,4 +1,4 @@
-import { createVar, keyframes, style, styleVariants } from '@vanilla-extract/css';
+import { createVar, globalStyle, keyframes, style, styleVariants } from '@vanilla-extract/css';
 import { recipe, RecipeVariants } from '@vanilla-extract/recipes';
 import { DefaultReset, color, config, toRem } from 'folds';
 
@@ -138,13 +138,107 @@ export const BubbleBefore = style({
   minWidth: toRem(36),
 });
 
-export const BubbleContent = style({
-  maxWidth: toRem(800),
-  padding: config.space.S200,
-  backgroundColor: color.SurfaceVariant.Container,
-  color: color.SurfaceVariant.OnContainer,
-  borderRadius: config.radii.R500,
+export const BubbleContainer = style({
+  width: '100%',
+  display: 'flex',
   position: 'relative',
+});
+
+export const BubbleContainerOwn = style({
+  justifyContent: 'flex-end',
+});
+
+export const BubbleContainerIncoming = style({
+  justifyContent: 'flex-start',
+});
+
+export const BubbleWrapper = style({
+  display: 'flex',
+  flexDirection: 'column',
+  maxWidth: 'min(78%, 620px)',
+  width: 'fit-content',
+});
+
+export const BubbleWrapperOwn = style({
+  alignItems: 'flex-end',
+  marginLeft: 'auto',
+});
+
+export const BubbleWrapperIncoming = style({
+  alignItems: 'flex-start',
+  marginRight: 'auto',
+});
+
+export const BubbleContent = style({
+  maxWidth: '100%',
+  width: 'fit-content',
+  padding: `${toRem(8)} ${toRem(14)}`,
+  backgroundColor: 'var(--omni-bubble-incoming-bg, var(--fc-surface-variant-container, #2e3238))',
+  color: 'var(--omni-bubble-incoming-color, var(--fc-surface-variant-on-container, #FFFFFF))',
+  borderRadius: 'var(--omni-bubble-radius, 18px)',
+  position: 'relative',
+  wordBreak: 'break-word',
+  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.06)',
+  transition: 'background-color 150ms ease, border-radius 150ms ease',
+});
+
+export const BubbleContentOwn = style({
+  backgroundColor: 'var(--omni-bubble-outgoing-bg, #007AFF)',
+  color: 'var(--omni-bubble-outgoing-color, #FFFFFF)',
+  borderBottomRightRadius: 'var(--omni-bubble-tail-radius, 4px)',
+  marginLeft: 'auto',
+  alignSelf: 'flex-end',
+});
+
+export const BubbleContentOwnCollapsed = style({
+  borderTopRightRadius: 'var(--omni-bubble-tail-radius, 4px)',
+});
+
+export const BubbleContentIncoming = style({
+  backgroundColor: 'var(--omni-bubble-incoming-bg, var(--fc-surface-variant-container, #2e3238))',
+  color: 'var(--omni-bubble-incoming-color, var(--fc-surface-variant-on-container, #FFFFFF))',
+  borderBottomLeftRadius: 'var(--omni-bubble-tail-radius, 4px)',
+  marginRight: 'auto',
+  alignSelf: 'flex-start',
+});
+
+export const BubbleContentIncomingCollapsed = style({
+  borderTopLeftRadius: 'var(--omni-bubble-tail-radius, 4px)',
+});
+
+export const BubbleMeta = style({
+  display: 'flex',
+  alignItems: 'center',
+  paddingTop: toRem(2),
+  opacity: 0.72,
+  userSelect: 'none',
+});
+
+export const BubbleMetaOwn = style({
+  justifyContent: 'flex-end',
+  color: 'inherit',
+});
+
+export const BubbleMetaIncoming = style({
+  justifyContent: 'flex-start',
+});
+
+globalStyle(`${BubbleContentOwn} a`, {
+  color: '#CBE5FF',
+  textDecoration: 'underline',
+});
+
+globalStyle(`${BubbleContentOwn} code`, {
+  backgroundColor: 'rgba(255, 255, 255, 0.22)',
+  color: '#FFFFFF',
+  borderRadius: toRem(4),
+  padding: `${toRem(1)} ${toRem(4)}`,
+});
+
+globalStyle(`${BubbleContentOwn} pre`, {
+  backgroundColor: 'rgba(0, 0, 0, 0.28)',
+  color: '#FFFFFF',
+  borderRadius: toRem(8),
 });
 
 export const BubbleContentArrowLeft = style({

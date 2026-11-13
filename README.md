@@ -4,7 +4,8 @@ A Matrix client that combines the latest [Cinny](https://github.com/cinnyapp/cin
 
 ## Features
 
-- **Modern & Classic UI Styles**: Choose between OmniChat's Modern rounded aesthetic (`50%` circular avatars, pill controls, modal backdrop blur) and Cinny's Classic styling in **Settings -> Appearance**.
+- **Modern, Classic & Custom UI Styles**: Choose between OmniChat's Modern rounded aesthetic (`50%` circular avatars, pill controls, modal backdrop blur), Cinny's Classic styling, or **Custom UI Style** with granular controls for avatar shape (circle, squircle, rounded, square), bubble corner radii, outgoing bubble color, speech tails, and glass blur in **Settings -> Appearance**.
+- **iOS Bubble Texts UI**: Authentic iOS iMessage-style speech bubbles with right-aligned outgoing messages in vibrant iOS blue or accent, left-aligned incoming messages in neutral surface gray, consecutive message clustering, speech bubble tails, and edge-aligned reactions. Switch between **Modern Timeline**, **iOS Bubbles**, and **Compact** in **Settings -> Appearance**.
 - **Themes & Typography**: Built-in **Ayu** (default dark), **Classic** dark, **Silver**, and **Butter** themes, JSON/URL custom themes, plus **Atkinson Hyperlegible** and **Inter** font options.
 - **Privacy & Media Controls**:
   - **Clear URLs** in **Settings -> Privacy** strips tracking parameters from outgoing messages.

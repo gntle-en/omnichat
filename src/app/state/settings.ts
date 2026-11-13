@@ -1,9 +1,12 @@
 import { atom } from 'jotai';
 import {
+  CustomUiSettings,
+  DEFAULT_CUSTOM_UI,
   DEFAULT_UI_FONT,
   DEFAULT_UI_STYLE,
   UiFont,
   UiStyle,
+  parseCustomUiSettings,
   parseUiFont,
   parseUiStyle,
 } from '../../util/uiStyle';
@@ -34,6 +37,7 @@ export interface Settings {
   customTheme?: CustomThemePayload;
   uiStyle: UiStyle;
   uiFont: UiFont;
+  customUi?: CustomUiSettings;
   monochromeMode?: boolean;
   isMarkdown: boolean;
   editorToolbar: boolean;
@@ -75,6 +79,7 @@ const defaultSettings: Settings = {
   customTheme: undefined,
   uiStyle: DEFAULT_UI_STYLE,
   uiFont: DEFAULT_UI_FONT,
+  customUi: DEFAULT_CUSTOM_UI,
   monochromeMode: false,
   isMarkdown: true,
   editorToolbar: false,
@@ -115,6 +120,7 @@ export const getSettings = (): Settings => {
     ...parsed,
     uiStyle: parseUiStyle(parsed.uiStyle),
     uiFont: parseUiFont(parsed.uiFont),
+    customUi: parseCustomUiSettings(parsed.customUi),
   };
 };
 
